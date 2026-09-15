@@ -5,6 +5,7 @@ import { GiWheat } from 'react-icons/gi'
 import { FaUserAlt } from 'react-icons/fa'
 import { MdSupportAgent } from 'react-icons/md'
 import heroMinecraft from '../assets/hero-minecraft.jpg'
+import heroBackground from '../assets/hero-background.jpg'
 import logoMinecraft from '../assets/logo-minecraft.png'
 import steveImg from '../assets/running-steve.png'
 import Dialog from '../components/ui/Dialog'
@@ -52,7 +53,7 @@ const LandingPage = () => {
             {/* Hero */}
             <section
                 className='relative flex flex-col items-center justify-center text-center py-50 px-8 gap-6'
-                style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+                style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : heroBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
             >
                 <div className='absolute inset-0' style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
                 <div className='relative z-10 flex flex-col items-center gap-6'>
