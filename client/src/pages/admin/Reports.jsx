@@ -292,7 +292,7 @@ const Reports = () => {
                             </div>
                         </div>
 
-                        {/* Monthly AgriXa Visits Chart */}}
+                        {/* Monthly AgriXa Visits Chart */}
                         <div onClick={openVisitsDialog}
                             className='p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow'
                             style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}`, height: '280px' }}>
