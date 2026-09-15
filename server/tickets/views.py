@@ -39,8 +39,8 @@ class SubmitTicketView(APIView):
         file_name = request.data.get('fileName', '')
         file_type = request.data.get('fileType', '')
 
-        if file_data and len(file_data.encode('utf-8')) > 1048487:
-            return Response({'error': 'File size must be 1MB or less.'}, status=status.HTTP_400_BAD_REQUEST)
+        if file_data and len(file_data.encode('utf-8')) > 10485760:
+            return Response({'error': 'File size must be 10MB or less.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not concern or not extension_worker_id:
             return Response({'error': 'concern and extensionWorkerId are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -168,8 +168,8 @@ class TicketMessageView(APIView):
         file_type = request.data.get('fileType', '')
         if not message and not file_data:
             return Response({'error': 'message or file is required'}, status=status.HTTP_400_BAD_REQUEST)
-        if file_data and len(file_data.encode('utf-8')) > 1048487:
-            return Response({'error': 'File size must be 1MB or less.'}, status=status.HTTP_400_BAD_REQUEST)
+        if file_data and len(file_data.encode('utf-8')) > 10485760:
+            return Response({'error': 'File size must be 10MB or less.'}, status=status.HTTP_400_BAD_REQUEST)
         ticket = get_ticket_by_id(ticket_id)
         if not ticket:
             return Response({'error': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -253,8 +253,7 @@ class TicketPinView(APIView):
             return Response({'error': 'Ticket not found'}, status=status.HTTP_404_NOT_FOUND)
         if request.user.role != 'extension_worker':
             return Response({'error': 'Only extension workers can pin messages'}, status=status.HTTP_403_FORBIDDEN)
-        pin_message(ticket_id, message_id)
-        from accounts.firebase_service import get_user_by_id, create_notification, notify_user_ws
+        is_unpin = pin_message(ticket_id, message_id)
         from asgiref.sync import async_to_sync
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
@@ -262,10 +261,12 @@ class TicketPinView(APIView):
             'type': 'ticket_message',
             'data': {'type': 'pin_updated'},
         })
-        user_data = get_user_by_id(request.user.id)
-        sender_name = f"{user_data['firstName']} {user_data['lastName']}" if user_data else 'Unknown'
-        notif = {'type': 'ticket_pinned', 'message': f'{sender_name} pinned an answer on your ticket.'}
-        for participant_id in ticket.get('participants', []):
-            create_notification(participant_id, 'ticket_pinned', notif['message'], request.user.id, ticket_id)
-            notify_user_ws(participant_id, notif)
-        return Response({'message': 'Message pinned'})
+        if not is_unpin:
+            from accounts.firebase_service import get_user_by_id, create_notification, notify_user_ws
+            user_data = get_user_by_id(request.user.id)
+            sender_name = f"{user_data['firstName']} {user_data['lastName']}" if user_data else 'Unknown'
+            notif = {'type': 'ticket_pinned', 'message': f'{sender_name} pinned an answer on your ticket.'}
+            for participant_id in ticket.get('participants', []):
+                create_notification(participant_id, 'ticket_pinned', notif['message'], request.user.id, ticket_id)
+                notify_user_ws(participant_id, notif)
+        return Response({'message': 'Message unpinned' if is_unpin else 'Message pinned'})

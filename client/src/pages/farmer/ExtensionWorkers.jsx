@@ -67,7 +67,7 @@ const FarmerExtensionWorkers = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
-        if (file.size > 750 * 1024) { setFileError('File size must be 1MB or less.'); e.target.value = ''; return }
+        if (file.size > 7.5 * 1024 * 1024) { setFileError('File size must be 10MB or less.'); e.target.value = ''; return }
         setFileError('')
         const reader = new FileReader()
         reader.onload = (ev) => setAttachedFile({ data: ev.target.result, name: file.name, type: file.type })

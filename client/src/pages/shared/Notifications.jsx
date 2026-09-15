@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
-import { MdPeople, MdSupportAgent, MdNotifications, MdSend, MdClose, MdConfirmationNumber, MdPushPin, MdCheckCircle, MdInsertDriveFile } from 'react-icons/md'
+import { MdPeople, MdSupportAgent, MdNotifications, MdSend, MdClose, MdConfirmationNumber, MdPushPin, MdCheckCircle, MdInsertDriveFile, MdAttachFile } from 'react-icons/md'
 import AdminLayout from '../../components/layout/AdminLayout'
 import FarmerLayout from '../../components/layout/FarmerLayout'
 import ExtensionWorkerLayout from '../../components/layout/ExtensionWorkerLayout'
@@ -65,6 +65,8 @@ const Notifications = () => {
     const [selected, setSelected] = useState(null)
     const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
 
+    const [markingAllRead, setMarkingAllRead] = useState(false)
+
     const [sendOpen, setSendOpen] = useState(false)
     const [allUsers, setAllUsers] = useState([])
     const [sendToAll, setSendToAll] = useState(false)
@@ -74,7 +76,12 @@ const Notifications = () => {
     const [notifMessage, setNotifMessage] = useState('')
     const [sending, setSending] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [notifFile, setNotifFile] = useState(null)
+    const [notifFileError, setNotifFileError] = useState('')
+    const notifFileInputRef = useRef(null)
     const dropdownRef = useRef(null)
+
+    const [lightboxSrc, setLightboxSrc] = useState(null)
 
     const fetchNotifications = () => {
         setLoading(true)
@@ -106,6 +113,18 @@ const Notifications = () => {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
+    const handleMarkAllRead = async () => {
+        if (unreadCount === 0) return
+        setMarkingAllRead(true)
+        try {
+            await api.patch('/users/notifications/read-all/')
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+            if (selected) setSelected(prev => ({ ...prev, isRead: true }))
+        } finally {
+            setMarkingAllRead(false)
+        }
+    }
+
     const TICKET_TYPES = ['ticket_reply', 'ticket_pinned', 'ticket_resolved']
 
     const handleSelect = async (n) => {
@@ -136,19 +155,39 @@ const Notifications = () => {
 
     const handleRemoveUser = (id) => setSelectedUsers(prev => prev.filter(u => u.id !== id))
 
+    const handleNotifFileChange = (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+        if (file.size > 7.5 * 1024 * 1024) { setNotifFileError('File size must be 10MB or less.'); e.target.value = ''; return }
+        setNotifFileError('')
+        const reader = new FileReader()
+        reader.onload = (ev) => setNotifFile({ data: ev.target.result, name: file.name, type: file.type })
+        reader.readAsDataURL(file)
+        e.target.value = ''
+    }
+
     const handleSend = async () => {
         if (!notifType.trim() || !notifMessage.trim()) return
         const userIds = sendToAll ? allUsers.map(u => u.id) : selectedUsers.map(u => u.id)
         if (!userIds.length) return
         setSending(true)
         try {
-            await api.post('/users/notifications/send/', { userIds, type: notifType.trim(), message: notifMessage.trim() })
+            await api.post('/users/notifications/send/', {
+            userIds,
+            type: notifType.trim(),
+            message: notifMessage.trim(),
+            fileData: notifFile?.data || '',
+            fileName: notifFile?.name || '',
+            fileType: notifFile?.type || '',
+        })
             setSendOpen(false)
             setSelectedUsers([])
             setUserSearch('')
             setNotifType('')
             setNotifMessage('')
             setSendToAll(false)
+            setNotifFile(null)
+            setNotifFileError('')
         } finally {
             setSending(false)
         }
@@ -200,6 +239,22 @@ const Notifications = () => {
                         View Ticket
                     </Button>
                 )}
+                {n.fileData && (
+                    <div className='flex flex-col gap-1'>
+                        <p className='text-xs opacity-40 uppercase tracking-wider' style={{ color: theme.textColor }}>Attachment</p>
+                        {n.fileType?.startsWith('image/') ? (
+                            <img src={n.fileData} alt={n.fileName}
+                                className='max-w-[200px] rounded-lg cursor-pointer'
+                                onClick={() => setLightboxSrc(n.fileData)} />
+                        ) : (
+                            <a href={n.fileData} download={n.fileName}
+                                className='flex items-center gap-1 text-sm underline'
+                                style={{ color: theme.primaryColor }}>
+                                <MdInsertDriveFile size={16} />{n.fileName}
+                            </a>
+                        )}
+                    </div>
+                )}
             </div>
         )
     }
@@ -223,11 +278,18 @@ const Notifications = () => {
                             </span>
                         )}
                     </div>
-                    {user?.role === 'admin' && (
-                        <Button size='sm' onClick={() => setSendOpen(true)}>
-                            <MdSend size={14} className='inline mr-1' /> Send Notification
-                        </Button>
-                    )}
+                    <div className='flex items-center gap-2'>
+                        {unreadCount > 0 && (
+                            <Button size='sm' variant='outline' onClick={handleMarkAllRead} loading={markingAllRead}>
+                                Mark All as Read
+                            </Button>
+                        )}
+                        {user?.role === 'admin' && (
+                            <Button size='sm' onClick={() => setSendOpen(true)}>
+                                <MdSend size={14} className='inline mr-1' /> Send Notification
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {loading ? (
@@ -404,12 +466,50 @@ const Notifications = () => {
                             style={{ borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
                     </div>
 
+                    {/* File Attachment */}
+                    <div className='flex flex-col gap-2'>
+                        <input ref={notifFileInputRef} type='file' className='hidden' onChange={handleNotifFileChange} />
+                        {notifFile ? (
+                            <div className='flex items-center gap-2 px-3 py-2 rounded-lg text-xs'
+                                style={{ backgroundColor: theme.primaryColor + '10', border: `1px solid ${theme.secondaryColor}` }}>
+                                {notifFile.type.startsWith('image/') ? (
+                                    <img src={notifFile.data} className='w-10 h-10 rounded object-cover' />
+                                ) : (
+                                    <MdInsertDriveFile size={20} color={theme.primaryColor} />
+                                )}
+                                <span className='flex-1 truncate' style={{ color: theme.textColor }}>{notifFile.name}</span>
+                                <button onClick={() => setNotifFile(null)}><MdClose size={14} color={theme.textColor} /></button>
+                            </div>
+                        ) : (
+                            <button onClick={() => notifFileInputRef.current?.click()}
+                                className='flex items-center gap-1 text-xs opacity-60 hover:opacity-100 transition-opacity'
+                                style={{ color: theme.primaryColor }}>
+                                <MdAttachFile size={16} /> Attach File
+                            </button>
+                        )}
+                        {notifFileError && <p className='text-xs' style={{ color: theme.dangerColor }}>{notifFileError}</p>}
+                    </div>
+
                     <div className='flex justify-end gap-2'>
                         <Button size='sm' variant='ghost' onClick={() => setSendOpen(false)}>Cancel</Button>
                         <Button size='sm' onClick={handleSend} loading={sending} disabled={!canSend}>Send</Button>
                     </div>
                 </div>
             </Dialog>
+
+            {/* Lightbox */}
+            {lightboxSrc && (
+                <div className='fixed inset-0 z-[80] flex items-center justify-center'
+                    style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}
+                    onClick={() => setLightboxSrc(null)}>
+                    <button className='absolute top-4 right-4 text-white opacity-70 hover:opacity-100'
+                        onClick={() => setLightboxSrc(null)}>
+                        <MdClose size={32} />
+                    </button>
+                    <img src={lightboxSrc} className='max-w-[90vw] max-h-[90vh] object-contain rounded-lg'
+                        onClick={e => e.stopPropagation()} />
+                </div>
+            )}
         </Layout>
     )
 }

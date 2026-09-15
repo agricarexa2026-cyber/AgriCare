@@ -125,13 +125,16 @@ def get_all_admins():
     docs = db.collection(USERS_COLLECTION).where('role', '==', 'admin').get()
     return [{'id': doc.id, **doc.to_dict()} for doc in docs]
 
-def create_notification(user_id, notification_type, message, related_user_id='', related_ticket_id=''):
+def create_notification(user_id, notification_type, message, related_user_id='', related_ticket_id='', file_data='', file_name='', file_type=''):
     doc_ref = db.collection(USERS_COLLECTION).document(user_id).collection(NOTIFICATIONS_SUBCOLLECTION).document()
     doc_ref.set({
         'type': notification_type,
         'message': message,
         'relatedUserId': related_user_id,
         'relatedTicketId': related_ticket_id,
+        'fileData': file_data,
+        'fileName': file_name,
+        'fileType': file_type,
         'isRead': False,
         'date': datetime.utcnow().isoformat(),
     })
@@ -142,6 +145,11 @@ def get_notifications(user_id):
 
 def mark_notification_read(user_id, notification_id):
     db.collection(USERS_COLLECTION).document(user_id).collection(NOTIFICATIONS_SUBCOLLECTION).document(notification_id).update({'isRead': True})
+
+def mark_all_notifications_read(user_id):
+    docs = db.collection(USERS_COLLECTION).document(user_id).collection(NOTIFICATIONS_SUBCOLLECTION).where('isRead', '==', False).get()
+    for doc in docs:
+        doc.reference.update({'isRead': True})
 
 def notify_user_ws(user_id, notification):
     from asgiref.sync import async_to_sync

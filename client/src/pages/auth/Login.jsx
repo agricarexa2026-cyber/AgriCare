@@ -8,6 +8,7 @@ import api from '../../services/api'
 import supabase from '../../services/supabase'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import heroMinecraft from '../../assets/hero-minecraft.jpg'
+import heroBackground from '../../assets/hero-background.jpg'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { setAppLoading } from '../../store/slices/appSlice'
 import Dialog from '../../components/ui/Dialog'
@@ -107,7 +108,7 @@ const Login = () => {
 
     return (
         <div className='min-h-screen flex items-center justify-center relative'
-            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : heroBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className='absolute inset-0' style={{ backgroundColor: 'rgba(0,0,0,0.55)' }} />
 
             <div className='relative z-10 w-full max-w-md mx-4'>
@@ -130,13 +131,13 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
                         <div className='flex flex-col gap-1'>
                             <label className='text-sm font-medium' style={{ color: theme.textColor }}>
-                                {role === 'admin' ? 'Username' : 'Username, Mobile Number, or Email'}
+                                {role === 'admin' ? 'Username' : useSupabaseAuth ? 'Email' : 'Username, Mobile Number, or Email'}
                             </label>
                             <input
                                 name='identifier'
                                 value={form.identifier}
                                 onChange={handleChange}
-                                placeholder={role === 'admin' ? 'Enter username' : 'Enter username, mobile number, or email'}
+                                placeholder={role === 'admin' ? 'Enter username' : useSupabaseAuth ? 'Enter email' : 'Enter username, mobile number, or email'}
                                 required
                                 className='w-full px-4 py-2.5 text-sm outline-none border'
                                 style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }}

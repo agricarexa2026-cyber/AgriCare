@@ -224,7 +224,7 @@ const AdminKnowledgeRepository = () => {
                 </div>
 
                 {/* Status Tabs */}
-                <div className='flex gap-2'>
+                <div className='flex gap-2 overflow-x-auto pb-1'>
                     {STATUS_TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className='px-3 py-1 rounded-full text-xs font-medium capitalize transition-all'

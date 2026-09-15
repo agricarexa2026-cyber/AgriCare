@@ -154,7 +154,7 @@ const ExtensionWorkerTickets = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
-        if (file.size > 750 * 1024) { setFileError('File size must be 1MB or less.'); e.target.value = ''; return }
+        if (file.size > 7.5 * 1024 * 1024) { setFileError('File size must be 10MB or less.'); e.target.value = ''; return }
         setFileError('')
         const reader = new FileReader()
         reader.onload = (ev) => setAttachedFile({ data: ev.target.result, name: file.name, type: file.type })
@@ -194,7 +194,7 @@ const ExtensionWorkerTickets = () => {
                 </div>
 
                 {/* Status Tabs */}
-                <div className='flex gap-2'>
+                <div className='flex gap-2 overflow-x-auto pb-1'>
                     {STATUS_TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
                             className='px-3 py-1 rounded-full text-xs font-medium capitalize transition-all'

@@ -92,10 +92,16 @@ def add_message(ticket_id, data):
 
 def pin_message(ticket_id, message_id):
     ticket_ref = db.collection(TICKETS_COLLECTION).document(ticket_id)
+    ticket = ticket_ref.get()
+    if not ticket.exists:
+        return False
+    current_pinned = ticket.to_dict().get('pinnedMessageId', '')
+    is_unpin = current_pinned == message_id
     messages = ticket_ref.collection(MESSAGES_SUBCOLLECTION).get()
     for msg in messages:
-        msg.reference.update({'isPinned': msg.id == message_id})
-    ticket_ref.update({'pinnedMessageId': message_id})
+        msg.reference.update({'isPinned': False if is_unpin else msg.id == message_id})
+    ticket_ref.update({'pinnedMessageId': '' if is_unpin else message_id})
+    return is_unpin
 
 def delete_message(ticket_id, message_id):
     db.collection(TICKETS_COLLECTION).document(ticket_id)\

@@ -9,6 +9,7 @@ import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import Dialog from '../../components/ui/Dialog'
 import Button from '../../components/ui/Button'
 import heroMinecraft from '../../assets/hero-minecraft.jpg'
+import heroBackground from '../../assets/hero-background.jpg'
 import { setSessionCookie, getCookie, deleteCookie } from '../../utils/cookies'
 
 const Register = () => {
@@ -238,7 +239,7 @@ const Register = () => {
 
     return (
         <div className='min-h-screen flex items-center justify-center relative'
-            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : heroBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className='absolute inset-0' style={{ backgroundColor: 'rgba(0,0,0,0.55)' }} />
 
             <div className='relative z-10 w-full max-w-md mx-4'>
