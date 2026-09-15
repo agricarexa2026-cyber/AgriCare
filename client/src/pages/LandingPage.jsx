@@ -92,7 +92,7 @@ const LandingPage = () => {
             <section className='py-16 px-8 text-center'>
                 <h2 className='text-3xl font-bold mb-8' style={{ color: theme.textColor }}>Features</h2>
                 <div className='flex gap-6 justify-center flex-wrap'>
-                    {['Fast Ticket Support', 'Real-time Updates', 'Knowledge Repository'].map((feature) => (
+                    {['Fast Ticket Support', 'Real-time Updates', 'AgriXa'].map((feature) => (
                         <div key={feature} className='p-6 w-48 flex flex-col items-center gap-3' style={{ backgroundColor: theme.primaryColor + '20', borderRadius: theme.borderRadius }}>
                             <GiWheat size={32} color={theme.primaryColor} />
                             <p className='font-semibold m-0' style={{ color: theme.textColor }}>{feature}</p>

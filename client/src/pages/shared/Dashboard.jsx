@@ -132,7 +132,7 @@ const Dashboard = () => {
             <StatCards items={[
                 { icon: MdPeople, label: 'Active Workers', value: stats?.workers?.active, color: '#22c55e' },
                 { icon: MdPersonOff, label: 'Inactive Workers', value: stats?.workers?.inactive, color: '#ef4444' },
-                { icon: MdMenuBook, label: 'Repo Visits', value: stats?.knowledgeRepositoryVisits, color: theme.primaryColor },
+                { icon: MdMenuBook, label: 'AgriXa Visits', value: stats?.knowledgeRepositoryVisits, color: theme.primaryColor },
                 { icon: MdConfirmationNumber, label: 'Tickets Today', value: stats?.tickets?.today, color: theme.secondaryColor },
             ]} />
             <TicketChart theme={theme} title='Ticket Overview'

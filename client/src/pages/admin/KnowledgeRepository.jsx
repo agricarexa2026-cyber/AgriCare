@@ -185,7 +185,7 @@ const AdminKnowledgeRepository = () => {
     return (
         <AdminLayout>
             <div className='flex flex-col gap-4'>
-                <h1 className='text-2xl font-bold' style={{ color: theme.textColor }}>Knowledge Repository</h1>
+                <h1 className='text-2xl font-bold' style={{ color: theme.textColor }}>AgriXa</h1>
 
                 {/* Filters */}
                 <div className='flex items-center gap-2 flex-wrap'>

@@ -48,7 +48,7 @@ class SubmitTicketView(APIView):
         keywords = extract_keywords(concern)
 
         if join_existing and ticket_id:
-            join_ticket(ticket_id, request.user.id, farmer_name, concern)
+            join_ticket(ticket_id, request.user.id)
             from accounts.firebase_service import broadcast_ticket_update, create_notification, notify_user_ws
             broadcast_ticket_update()
             ticket = get_ticket_by_id(ticket_id)

@@ -64,7 +64,7 @@ def create_ticket(data):
     })
     return doc_ref.id
 
-def join_ticket(ticket_id, farmer_id, farmer_name, concern):
+def join_ticket(ticket_id, farmer_id):
     ticket_ref = db.collection(TICKETS_COLLECTION).document(ticket_id)
     ticket = ticket_ref.get()
     if not ticket.exists:
@@ -73,12 +73,6 @@ def join_ticket(ticket_id, farmer_id, farmer_name, concern):
     if farmer_id not in participants:
         participants.append(farmer_id)
         ticket_ref.update({'participants': participants})
-    add_message(ticket_id, {
-        'senderId': farmer_id,
-        'senderName': farmer_name,
-        'senderRole': 'farmer',
-        'message': concern,
-    })
 
 def add_message(ticket_id, data):
     doc_ref = db.collection(TICKETS_COLLECTION).document(ticket_id)\

@@ -50,7 +50,7 @@ const Topbar = ({ children, notificationCount = 0, navLinks = [] }) => {
                 style={{ backgroundColor: theme.primaryColor, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
                 {allLinks.map(({ label, path, icon: Icon, badge }) => {
                     const isActive = location.pathname === path
-                    const shortLabel = label === 'Knowledge Repository' ? 'Repo' : label === 'Notifications' ? 'Notifs' : label === 'Extension Workers' ? 'Workers' : label
+                    const shortLabel = label === 'Notifications' ? 'Notifs' : label === 'Extension Workers' ? 'Workers' : label
                     return (
                         <button key={path} onClick={() => navigate(path)}
                             className='flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all'

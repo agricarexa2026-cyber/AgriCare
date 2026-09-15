@@ -7,7 +7,7 @@ import api from '../../services/api'
 
 const farmerNavLinks = [
     { label: 'Dashboard', path: '/dashboard', icon: MdDashboard },
-    { label: 'Knowledge Repository', path: '/farmer/knowledge-repository', icon: MdMenuBook },
+    { label: 'AgriXa', path: '/farmer/knowledge-repository', icon: MdMenuBook },
     { label: 'Extension Workers', path: '/farmer/extension-workers', icon: MdSupportAgent },
 ]
 

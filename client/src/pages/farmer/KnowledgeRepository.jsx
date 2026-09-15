@@ -177,7 +177,7 @@ const FarmerKnowledgeRepository = () => {
         <FarmerLayout>
             <div className='flex flex-col gap-4'>
                 <div className='flex items-center justify-between'>
-                    <h1 className='text-2xl font-bold' style={{ color: theme.textColor }}>Knowledge Repository</h1>
+                    <h1 className='text-2xl font-bold' style={{ color: theme.textColor }}>AgriXa</h1>
                     <span className='text-xs opacity-50' style={{ color: theme.textColor }}>{visits} visit{visits !== 1 ? 's' : ''}</span>
                 </div>
 

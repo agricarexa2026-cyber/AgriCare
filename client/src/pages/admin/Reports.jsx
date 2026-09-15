@@ -120,7 +120,7 @@ const Reports = () => {
             setVisitsWeekLabel(res.data.weekLabel ?? '')
             setDialog({
                 type: 'visits',
-                title: 'Monthly Repository Visits',
+                title: 'Monthly AgriXa Visits',
                 columns: ['Day / Month', 'Visits'],
                 rows: res.data.rows,
                 weekLabel: res.data.weekLabel ?? '',
@@ -292,13 +292,13 @@ const Reports = () => {
                             </div>
                         </div>
 
-                        {/* Monthly Repository Visits Chart */}
+                        {/* Monthly AgriXa Visits Chart */}}
                         <div onClick={openVisitsDialog}
                             className='p-6 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-shadow'
                             style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}`, height: '280px' }}>
                             <Bar
                                 data={{ labels: stats?.visits.labels ?? [], datasets: [{ label: 'Visits', data: stats?.visits.data ?? [], backgroundColor: '#f59e0bcc', borderRadius: 8 }] }}
-                                options={chartOptions('Monthly Repository Visits')}
+                                options={chartOptions('Monthly AgriXa Visits')}
                             />
                         </div>
 

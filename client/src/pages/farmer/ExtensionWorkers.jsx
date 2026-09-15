@@ -286,8 +286,11 @@ const FarmerExtensionWorkers = () => {
                                     {existingTicket.status}
                                 </span>
                             </div>
-                            <div className='flex justify-end gap-2'>
+                            <div className='flex justify-end gap-2 flex-wrap'>
                                 <Button variant='ghost' onClick={() => { setExistingTicketDialog(false); setTicketDialog(true) }}>Back</Button>
+                                <Button variant='outline' onClick={() => handleSubmitTicket(false)} disabled={submitting}>
+                                    Create New Ticket
+                                </Button>
                                 <Button onClick={() => handleSubmitTicket(true)} disabled={submitting}>
                                     {submitting ? 'Joining...' : 'Join Conversation'}
                                 </Button>

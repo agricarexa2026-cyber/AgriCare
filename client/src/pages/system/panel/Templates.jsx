@@ -7,12 +7,12 @@ const ROLES = [
     {
         key: 'admin',
         label: 'Admin',
-        pages: ['Dashboard', 'Farmers', 'Extension Workers', 'Knowledge Repository', 'Reports', 'Notifications'],
+        pages: ['Dashboard', 'Farmers', 'Extension Workers', 'AgriXa', 'Reports', 'Notifications'],
     },
     {
         key: 'farmer',
         label: 'Farmer',
-        pages: ['Dashboard', 'Knowledge Repository', 'Extension Workers', 'Notifications'],
+        pages: ['Dashboard', 'AgriXa', 'Extension Workers', 'Notifications'],
     },
     {
         key: 'extension_worker',
@@ -66,7 +66,7 @@ const SKELETONS = {
             ))}
         </div>
     ),
-    'Knowledge Repository': (
+    'AgriXa': (
         <div className='flex flex-col gap-1.5'>
             {/* Search + tabs */}
             <SkelBox h='h-3' rounded='rounded' />
