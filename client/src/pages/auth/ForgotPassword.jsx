@@ -6,6 +6,7 @@ import api from '../../services/api'
 import supabase from '../../services/supabase'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import heroMinecraft from '../../assets/hero-minecraft.jpg'
+import heroBackground from '../../assets/hero-background.jpg'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import Dialog from '../../components/ui/Dialog'
 import Button from '../../components/ui/Button'
@@ -32,22 +33,10 @@ const ForgotPassword = () => {
         setLoading(true)
         setError(null)
         try {
-            if (useSupabaseAuth) {
-                try {
-                    await api.post('/auth/supabase/forgot-password/', { email: identifier })
-                    setStep(3) // skip OTP step, Supabase sends reset link directly
-                } catch {
-                    const res = await api.post('/auth/forgot-password/', { identifier })
-                    setMobileNumber(res.data.mobileNumber)
-                    setStep(2)
-                }
-            } else {
-                const res = await api.post('/auth/forgot-password/', { identifier })
-                setMobileNumber(res.data.mobileNumber)
-                setStep(2)
-            }
+            const res = await api.post('/auth/forgot-password/', { email: identifier })
+            setMobileNumber(res.data.mobileNumber)
+            setStep(2)
         } catch (err) {
-            setLoadingMessage(null)
             setError(err.response?.data?.error || 'User not found. Please try again.')
         } finally {
             setLoadingMessage(null)
@@ -64,7 +53,6 @@ const ForgotPassword = () => {
             await api.post('/auth/verify-otp/', { mobileNumber, otp })
             setStep(3)
         } catch (err) {
-            setLoadingMessage(null)
             setError(err.response?.data?.error || 'Invalid OTP. Please try again.')
         } finally {
             setLoading(false)
@@ -74,16 +62,15 @@ const ForgotPassword = () => {
 
     const handleStep3 = async (e) => {
         e.preventDefault()
-        if (form.password !== form.confirmPassword) return setError('Passwords do not match')
+        if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
         setLoadingMessage('Resetting password...')
         setLoading(true)
         setError(null)
         try {
             const hashedPassword = await sha256(form.password)
-            await api.post('/auth/reset-password/', { identifier, password: hashedPassword })
+            await api.post('/auth/reset-password/', { email: identifier, password: hashedPassword })
             setStep(4)
         } catch (err) {
-            setLoadingMessage(null)
             setError(err.response?.data?.error || 'Failed to reset password. Please try again.')
         } finally {
             setLoading(false)
@@ -93,7 +80,7 @@ const ForgotPassword = () => {
 
     return (
         <div className='min-h-screen flex items-center justify-center relative'
-            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            style={{ backgroundImage: `url(${theme.minecraftHero ? heroMinecraft : heroBackground})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className='absolute inset-0' style={{ backgroundColor: 'rgba(0,0,0,0.55)' }} />
 
             <div className='relative z-10 w-full max-w-md mx-4'>
@@ -114,12 +101,12 @@ const ForgotPassword = () => {
                         </div>
                     )}
 
-                    {/* Step 1 - Identifier */}
+                    {/* Step 1 - Email */}
                     {step === 1 && (
                         <form onSubmit={handleStep1} className='flex flex-col gap-4'>
                             <div className='flex flex-col gap-1'>
-                                <label className='text-sm font-medium' style={{ color: theme.textColor }}>Username or Mobile Number</label>
-                                <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder='Enter username or mobile number' required
+                                <label className='text-sm font-medium' style={{ color: theme.textColor }}>Email</label>
+                                <input value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder='Enter your email' required type='email'
                                     className='w-full px-4 py-2.5 text-sm outline-none border'
                                     style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
                             </div>
@@ -130,8 +117,8 @@ const ForgotPassword = () => {
                     {/* Step 2 - OTP */}
                     {step === 2 && (
                         <form onSubmit={handleStep2} className='flex flex-col gap-4'>
-                            <p className='text-sm text-center' style={{ color: theme.textColor, opacity: 0.7 }}>
-                                We sent an OTP to <strong>{mobileNumber}</strong>
+                            <p className='text-sm text-center opacity-70' style={{ color: theme.textColor }}>
+                                We sent an OTP to <strong>{identifier}</strong>
                             </p>
                             <div className='flex flex-col gap-1'>
                                 <label className='text-sm font-medium' style={{ color: theme.textColor }}>Enter OTP</label>
@@ -149,8 +136,8 @@ const ForgotPassword = () => {
                             <div className='flex flex-col gap-1'>
                                 <label className='text-sm font-medium' style={{ color: theme.textColor }}>New Password</label>
                                 <div className='relative'>
-                                    <input name='password' type={showPassword ? 'text' : 'password'} value={form.password}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                                    <input type={showPassword ? 'text' : 'password'} value={form.password}
+                                        onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
                                         placeholder='Enter new password' required
                                         className='w-full px-4 py-2.5 text-sm outline-none border pr-10'
                                         style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
@@ -162,8 +149,8 @@ const ForgotPassword = () => {
                             <div className='flex flex-col gap-1'>
                                 <label className='text-sm font-medium' style={{ color: theme.textColor }}>Confirm Password</label>
                                 <div className='relative'>
-                                    <input name='confirmPassword' type={showConfirm ? 'text' : 'password'} value={form.confirmPassword}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                                    <input type={showConfirm ? 'text' : 'password'} value={form.confirmPassword}
+                                        onChange={(e) => setForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                                         placeholder='Confirm new password' required
                                         className='w-full px-4 py-2.5 text-sm outline-none border pr-10'
                                         style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
@@ -179,8 +166,10 @@ const ForgotPassword = () => {
                     {/* Step 4 - Success */}
                     {step === 4 && (
                         <div className='flex flex-col items-center gap-4 text-center'>
+                            <div className='w-16 h-16 rounded-full flex items-center justify-center text-3xl'
+                                style={{ backgroundColor: '#dcfce7', border: '2px solid #16a34a' }}>✅</div>
                             <p className='text-sm' style={{ color: theme.textColor }}>Password reset successfully!</p>
-                            <Button onClick={() => navigate('/')}>Back to Home</Button>
+                            <Button onClick={() => navigate('/login')}>Back to Login</Button>
                         </div>
                     )}
                 </div>

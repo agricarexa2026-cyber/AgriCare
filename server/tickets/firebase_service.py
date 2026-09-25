@@ -24,6 +24,9 @@ def extract_keywords(text):
             keywords.append(cleaned)
     return list(set(keywords))
 
+def extract_keywords_combined(title, concern):
+    return list(set(extract_keywords(title) + extract_keywords(concern)))
+
 def find_matching_ticket(extension_worker_id, keywords):
     docs = db.collection(TICKETS_COLLECTION)\
         .where('extensionWorkerId', '==', extension_worker_id).get()
@@ -34,7 +37,10 @@ def find_matching_ticket(extension_worker_id, keywords):
         if data.get('status') not in ['pending', 'ongoing', 'resolved']:
             continue
         stored = data.get('keywords', [])
-        existing_keywords = set(stored) if stored else set(extract_keywords(data.get('concern', '')))
+        if stored:
+            existing_keywords = set(stored)
+        else:
+            existing_keywords = set(extract_keywords_combined(data.get('title', ''), data.get('concern', '')))
         incoming_keywords = set(keywords)
         overlap = len(existing_keywords & incoming_keywords)
         if overlap > 0 and overlap > best_score:
@@ -47,6 +53,7 @@ def create_ticket(data):
     doc_ref.set({
         'extensionWorkerId': data['extensionWorkerId'],
         'extensionWorkerName': data['extensionWorkerName'],
+        'title': data['title'],
         'concern': data['concern'],
         'keywords': data['keywords'],
         'status': 'pending',

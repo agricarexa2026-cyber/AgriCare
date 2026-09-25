@@ -7,13 +7,14 @@ import Dialog from '../../components/ui/Dialog'
 import Button from '../../components/ui/Button'
 import api from '../../services/api'
 
-const STATUS_TABS = ['all', 'pending', 'ongoing', 'resolved']
+const STATUS_TABS = ['all', 'pending', 'ongoing', 'waiting_for_feedback', 'resolved']
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const statusStyle = {
-    pending:  { bg: '#fef9c3', color: '#ca8a04' },
-    ongoing:  { bg: '#dbeafe', color: '#1d4ed8' },
-    resolved: { bg: '#dcfce7', color: '#16a34a' },
+    pending:              { bg: '#fef9c3', color: '#ca8a04' },
+    ongoing:              { bg: '#dbeafe', color: '#1d4ed8' },
+    waiting_for_feedback: { bg: '#fce7f3', color: '#be185d' },
+    resolved:             { bg: '#dcfce7', color: '#16a34a' },
 }
 
 const formatDate = (iso) => {
@@ -255,12 +256,13 @@ const AdminKnowledgeRepository = () => {
                                 style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}` }}>
                                 <div className='flex flex-col gap-2 flex-1 min-w-0'>
                                     <div className='flex items-start justify-between gap-2'>
-                                        <p className='text-sm font-medium line-clamp-2' style={{ color: theme.textColor }}>{ticket.concern}</p>
+                                        <p className='text-sm font-semibold line-clamp-1' style={{ color: theme.textColor }}>{ticket.title || ticket.concern}</p>
                                         <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium capitalize'
                                             style={{ backgroundColor: statusStyle[ticket.status]?.bg, color: statusStyle[ticket.status]?.color }}>
                                             {ticket.status}
                                         </span>
                                     </div>
+                                    {ticket.title && <p className='text-xs opacity-60 line-clamp-1' style={{ color: theme.textColor }}>{ticket.concern}</p>}
                                     <div className='flex items-center justify-between'>
                                         <p className='text-xs opacity-50' style={{ color: theme.textColor }}>{ticket.extensionWorkerName}</p>
                                         <p className='text-xs opacity-40' style={{ color: theme.textColor }}>{formatDate(ticket.date)}</p>
@@ -292,8 +294,9 @@ const AdminKnowledgeRepository = () => {
                             </span>
                         </div>
 
-                        {/* Concern */}
+                        {/* Title + Concern */}
                         <div className='flex flex-col gap-1'>
+                            {selected.title && <p className='text-base font-semibold' style={{ color: theme.textColor }}>{selected.title}</p>}
                             <p className='text-xs opacity-50' style={{ color: theme.textColor }}>Concern</p>
                             <p className='text-sm p-3 rounded-lg' style={{ backgroundColor: theme.primaryColor + '10', color: theme.textColor }}>
                                 {selected.concern}
@@ -396,8 +399,13 @@ const AdminKnowledgeRepository = () => {
                                     </Button>
                                 )}
                                 {selected.status === 'ongoing' && (
-                                    <Button size='sm' onClick={() => handleStatusUpdate('resolved')} loading={updatingStatus}>
+                                    <Button size='sm' onClick={() => handleStatusUpdate('waiting_for_feedback')} loading={updatingStatus}>
                                         Mark as Resolved
+                                    </Button>
+                                )}
+                                {selected.status === 'waiting_for_feedback' && (
+                                    <Button size='sm' onClick={() => handleStatusUpdate('resolved')} loading={updatingStatus}>
+                                        Force Resolve
                                     </Button>
                                 )}
                             </div>
@@ -414,7 +422,7 @@ const AdminKnowledgeRepository = () => {
                         <p className='text-sm' style={{ color: theme.textColor }}>
                             Delete this ticket and all its messages? This cannot be undone.
                         </p>
-                        <p className='text-sm font-medium line-clamp-2' style={{ color: theme.textColor }}>{confirmDelete.concern}</p>
+                        <p className='text-sm font-medium line-clamp-2' style={{ color: theme.textColor }}>{confirmDelete.title || confirmDelete.concern}</p>
                         <div className='flex justify-end gap-2'>
                             <Button size='sm' variant='ghost' onClick={() => setConfirmDelete(null)}>Cancel</Button>
                             <Button size='sm' variant='danger' onClick={() => handleDelete(confirmDelete.id)} loading={deleting}>Delete</Button>

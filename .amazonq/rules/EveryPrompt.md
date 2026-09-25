@@ -72,7 +72,7 @@ Key Features:
 - Dashboard nav link added to Farmer and Extension Worker layouts
 - Notifications: Per-user subcollection at users/{userId}/notifications/{notificationId} with fields: type, message, relatedUserId, isRead, date
 - Notification Types (admin): new_farmer, new_extension_worker — triggered on CompleteRegistrationView
-- Notification Types (ticket): ticket_reply, ticket_pinned, ticket_resolved — triggered in tickets/views.py
+- Notification Types (ticket): ticket_reply, ticket_pinned, ticket_resolved, ticket_waiting_feedback — triggered in tickets/views.py
 - Notification Badge: Real-time via WebSocket ws/notifications/{userId}/ — AdminLayout fetches initial unread count + listens for new ones
 - Notification Page: /notifications — lists all, click unread to mark as read, real-time via WebSocket
 - ws/ticket-updates/ — new WebSocket channel for ticket list updates. TicketUpdatesConsumer → group: ticket_updates → handler: ticket_update. broadcast_ticket_update() in accounts/firebase_service.py. Called on: ticket submit, ticket join, ticket delete. Farmer KnowledgeRepository, Extension Worker Tickets, Admin KnowledgeRepository all listen to ws/ticket-updates/ (not ws/admin-updates/)
@@ -87,13 +87,14 @@ Key Features:
 - Position Management: Admin can add, edit, toggle, delete positions via SidePanel in ExtensionWorkers page
 - positionId saved in Firestore on create_user()
 - Change Position Dialog: shows current position as disabled default, filters it from dropdown, Save disabled if unchanged
-- Ticket System: farmers submit tickets to extension workers with concern text
-- Ticket Keyword Extraction: backend strips stopwords, extracts meaningful keywords from concern text (extract_keywords() in tickets/firebase_service.py)
-- Ticket Matching: find_matching_ticket() checks existing pending/ongoing tickets for same worker with overlapping keywords — fuzzy match
-- Ticket Flow: farmer fills form (name readonly, barangay readonly, concern) → POST /tickets/check/ → if match found show join dialog, if not show confirm dialog → POST /tickets/submit/ with joinExisting flag
-- Ticket Structure: tickets/{ticketId} with extensionWorkerId, extensionWorkerName, concern, keywords[], status, participants[], date
+- Ticket System: farmers submit tickets to extension workers with a title and concern text
+- Ticket Keyword Extraction: backend strips stopwords, extracts meaningful keywords from both title + concern text (extract_keywords_combined() in tickets/firebase_service.py)
+- Ticket Matching: find_matching_ticket() checks existing tickets for same worker with overlapping keywords from title+concern — fuzzy match
+- Ticket Flow: farmer fills form (name readonly, barangay readonly, title, concern) → POST /tickets/check/ → if match found show join dialog, if not show confirm dialog → POST /tickets/submit/ with joinExisting flag
+- Ticket Structure: tickets/{ticketId} with extensionWorkerId, extensionWorkerName, title, concern, keywords[], status, participants[], date
 - Ticket Messages: tickets/{ticketId}/messages/{messageId} with senderId, senderName, senderRole, message, fileData, fileName, fileType, isPinned, date
-- Ticket Statuses: pending (waiting for worker) → ongoing (worker responded) → resolved
+- Ticket Statuses: pending (waiting for worker) → ongoing (worker responded) → waiting_for_feedback (worker requested resolution) → resolved (farmer confirmed)
+- Ticket Resolution Flow: extension worker clicks Mark as Resolved → status = waiting_for_feedback → notification sent to original farmer (participants[0]) → farmer clicks Confirm Resolved (in ticket dialog or notification detail) → status = resolved. Extension worker can Cancel Resolution → back to ongoing. Admin can Force Resolve bypassing farmer confirmation.
 - Ticket Visibility: all farmers see all tickets (public knowledge base), extension workers see only their own, admin sees all
 - Multiple farmers can join same ticket as participants — their concern message auto-added to thread
 - Farmer Extension Workers page: card grid (1/2/3 cols), only active+approved workers, Submit Ticket opens ticket flow
@@ -105,8 +106,8 @@ Key Features:
 - Email duplicate check commented out for testing (RegisterView, Register.jsx debounce, handleStep1 validation)
 - Knowledge Repository: farmer page at /farmer/knowledge-repository — lists all tickets, search by concern/worker name, filter by status tabs (all/pending/ongoing/resolved), visit counter via POST /tickets/visits/ on mount
 - Knowledge Repository visit counter: GET /tickets/visits/ returns count, POST increments — stored in analytics/knowledge_repository Firestore doc
-- Ticket detail dialog (farmer): shows extension worker name, status, concern block, pinned answer block, full message thread, reply input (participants only), close button
-- Ticket detail dialog (extension worker): shows date, status, concern block, pinned answer block, full message thread, reply input, pin buttons per message, Mark as Ongoing / Mark as Resolved buttons
+- Ticket detail dialog (farmer): shows extension worker name, status, title, concern block, pinned answer block, full message thread, reply input (participants only), Confirm Resolved button (only for participants[0] when status is waiting_for_feedback)
+- Ticket detail dialog (extension worker): shows date, status, title, concern block, pinned answer block, full message thread, reply input, pin buttons per message, Mark as Ongoing / Mark as Resolved (→ waiting_for_feedback) / Cancel Resolution buttons
 - Pinned Message: extension worker clicks pin icon on any message → that message becomes pinned, all others unpinned. pinnedMessageId stored on ticket doc. Pinned block shown above thread below concern. Clicking pinned block scrolls to that message in thread
 - Pinned block shows file icon + filename for images (click opens lightbox) and non-images (click downloads) — no inline image in pinned block
 - Auto Ongoing: when extension worker sends first reply on a pending ticket, status auto-updates to ongoing
@@ -116,9 +117,9 @@ Key Features:
 - Attachment preview strip shown above reply input before sending (thumbnail for images, file icon for others, ✕ to remove)
 - Real-time messages: TicketConsumer (ws/tickets/<ticket_id>/) broadcasts new_message and pin_updated events. Both farmer and extension worker open WS when dialog opens, close on dialog close. Uses refetchRef + selectedIdRef pattern to avoid stale closure issues with large base64 payloads
 - Admin Knowledge Repository: admin page at /admin/knowledge-repository — ticket list server-side filtered by week (‹ › nav), month dropdown (Jan–Dec), year dropdown (dynamic, only years with data). All 3 filters linked — week nav auto-updates month + year, month/year change jumps to Monday of that month's first week. Search + status tabs filter client-side on top. Detail dialog with full message thread (read-only), Mark as Ongoing/Resolved, Delete individual messages per bubble. Delete Ticket button on each ticket card (not in dialog) opens confirm Dialog. Real-time via TicketConsumer WS
-- Ticket Notifications: submit ticket → notifies extension worker; join ticket → notifies extension worker; extension worker reply → notifies all participants with message preview ('{name} replied: {message}'); farmer reply → notifies extension worker with message preview; file-only reply → '{name} replied and sent an attachment.'; pin → notifies all participants; mark as ongoing → notifies all participants; resolved → notifies all participants. All use create_notification() + notify_user_ws()
+- Ticket Notifications: submit ticket → notifies extension worker; join ticket → notifies extension worker; extension worker reply → notifies all participants with message preview ('{name} replied: {message}'); farmer reply → notifies extension worker with message preview; file-only reply → '{name} replied and sent an attachment.'; pin → notifies all participants; mark as ongoing → notifies all participants; waiting_for_feedback → notifies original farmer (participants[0]) with Confirm Resolved action; resolved (farmer confirmed) → notifies all participants + extension worker. All use create_notification() + notify_user_ws()
 - Notification relatedTicketId field — stored in Firestore on all ticket notifications. create_notification() accepts related_ticket_id param
-- Notifications page — View Ticket button shown for ticket notifications (ticket_reply, ticket_pinned, ticket_resolved) when relatedTicketId present. Navigates to /farmer/knowledge-repository or /extension-worker/tickets with { state: { ticketId } }. Target page auto-opens ticket dialog and scrolls to card on mount
+- Notifications page — View Ticket button shown for ticket notifications (ticket_reply, ticket_pinned, ticket_resolved, ticket_waiting_feedback) when relatedTicketId present. Confirm Resolved button shown for ticket_waiting_feedback type. Navigates to /farmer/knowledge-repository or /extension-worker/tickets with { state: { ticketId } }.
 - Notification detail panel shows MdInsertDriveFile icon when message contains 'sent an attachment'
 - Notifications page uses correct layout per role: FarmerLayout / ExtensionWorkerLayout / AdminLayout
 - FarmerLayout and ExtensionWorkerLayout: added unread count fetch on mount + ws/notifications/{userId}/ WebSocket for real-time badge increment. Notifications nav link NOT in navLinks array (Sidebar/Topbar add it automatically via allLinks)
@@ -131,7 +132,9 @@ Key Features:
 - Notification dialog on mobile — tapping a notification opens a Dialog on mobile (window.innerWidth < 768). `notifDetail()` helper reused by both mobile Dialog and desktop right panel
 - Dialog z-index order — Bottom nav `z-[60]` → SidePanel `z-[65]` → Dialog `z-[70]` → Confirmation `z-[75]` → Lightbox `z-[80]`
 - Dialog `mobileMaxH` prop — cleanly overrides mobile max-height without Tailwind class conflicts. Default `max-h-[70vh]`. Panel has `mb-16 sm:mb-0` to float above bottom nav on mobile
-- Keyword matching fix — `find_matching_ticket` re-extracts keywords from concern field when stored keywords is empty (fixes old tickets created before length filter fix)
+- Notification stat cards — fixed predefined types only: Total, Unread, New Farmer, New Extension Worker, Ticket Reply, Ticket Pinned, Ticket Resolved, Awaiting Confirmation. Always shown even if count is 0. Free-type manual notification types no longer generate extra cards.
+- Dashboard bar chart Y-axis — precision: 0 prevents decimal numbers when values are low
+- Keyword matching fix — find_matching_ticket re-extracts keywords from title+concern when stored keywords is empty
 
 WebSocket Consumers (server/core/consumers.py):
 - SystemConsumer → group: system → handler: system_update

@@ -45,6 +45,7 @@ def create_user(data):
         'isResetPass': False,
         'isPending': data.get('isPending', False),
         'positionId': data.get('positionId', ''),
+        'supabaseId': data.get('supabaseId', ''),
         'date': datetime.utcnow().isoformat(),
     })
     return doc_ref.id
@@ -109,6 +110,12 @@ def delete_user(user_id):
         else:
             ref.set({'deleted': 1})
         log_worker_event(user_id, 'deleted')
+    if user and user.get('supabaseId'):
+        try:
+            from core.supabase import supabase
+            supabase.auth.admin.delete_user(user['supabaseId'])
+        except Exception:
+            pass
     db.collection(USERS_COLLECTION).document(user_id).delete()
 
 def toggle_user_active(user_id):

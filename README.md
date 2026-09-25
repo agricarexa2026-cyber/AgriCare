@@ -73,13 +73,14 @@
 - Extension worker position management (add, edit, toggle, delete positions)
 - Change position dialog with current position shown as disabled default
 - Approve extension worker from View Dialog or table action
-- Ticket system — farmers submit tickets to extension workers with concern text
-- Keyword extraction — backend strips stopwords and extracts keywords from concern text
-- Fuzzy ticket matching — if existing ticket for same worker has overlapping keywords, farmer is prompted to join
+- Ticket system — farmers submit tickets to extension workers with a title and concern text
+- Keyword extraction — backend strips stopwords and extracts keywords from both title + concern text (extract_keywords_combined())
+- Fuzzy ticket matching — if existing ticket for same worker has overlapping keywords (from title+concern), farmer is prompted to join
 - Ticket flow: Submit form → check existing → join existing or confirm new → ticket created/joined
 - Tickets are public — all farmers can see all tickets (knowledge base)
 - Extension workers only see their own tickets
-- Ticket statuses: pending → ongoing → resolved
+- Ticket statuses: pending → ongoing → waiting_for_feedback → resolved
+- Ticket resolution flow — extension worker clicks Mark as Resolved → status becomes waiting_for_feedback → original farmer (participants[0]) must confirm → status becomes resolved. Extension worker can cancel resolution request (back to ongoing). Admin can force resolve.
 - Ticket messages subcollection — conversation thread between farmer and extension worker
 - Multiple farmers can join same ticket thread as participants
 - Farmer dashboard and Extension Worker dashboard — stat cards (Total, Pending, Resolved Tickets) + bar chart wired to real data from /dashboard/farmer-stats/ and /dashboard/worker-stats/
@@ -114,7 +115,8 @@
 - Notification dialog on mobile — tapping a notification opens a Dialog on mobile (window.innerWidth < 768). `notifDetail()` helper reused by both mobile Dialog and desktop right panel
 - Dialog z-index order — Bottom nav `z-[60]` → SidePanel `z-[65]` → Dialog `z-[70]` → Confirmation `z-[75]` → Lightbox `z-[80]`
 - Dialog `mobileMaxH` prop — cleanly overrides mobile max-height without Tailwind class conflicts. Default `max-h-[70vh]`. Panel has `mb-16 sm:mb-0` to float above bottom nav on mobile
-- Keyword matching fix — `find_matching_ticket` re-extracts keywords from concern field when stored keywords is empty (fixes old tickets created before length filter fix)
+- Notification stat cards on Notifications page — fixed predefined types only (Total, Unread, New Farmer, New Extension Worker, Ticket Reply, Ticket Pinned, Ticket Resolved, Awaiting Confirmation) — always shown even if count is 0. Free-type manual notifications no longer generate extra cards.
+- Dashboard bar chart Y-axis — precision: 0 added to prevent decimal numbers when values are low
 
 ---
 

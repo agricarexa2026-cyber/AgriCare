@@ -16,6 +16,7 @@ const TYPE_ICON = {
     ticket_reply: MdConfirmationNumber,
     ticket_pinned: MdPushPin,
     ticket_resolved: MdCheckCircle,
+    ticket_waiting_feedback: MdCheckCircle,
 }
 
 const TYPE_COLOR = {
@@ -24,6 +25,7 @@ const TYPE_COLOR = {
     ticket_reply: '#f59e0b',
     ticket_pinned: '#ec4899',
     ticket_resolved: '#10b981',
+    ticket_waiting_feedback: '#be185d',
 }
 
 const TYPE_LABEL = {
@@ -32,6 +34,7 @@ const TYPE_LABEL = {
     ticket_reply: 'Ticket Reply',
     ticket_pinned: 'Ticket Pinned',
     ticket_resolved: 'Ticket Resolved',
+    ticket_waiting_feedback: 'Awaiting Confirmation',
 }
 
 const ROLE_LABEL = { farmer: 'Farmer', extension_worker: 'Extension Worker', admin: 'Admin' }
@@ -125,7 +128,7 @@ const Notifications = () => {
         }
     }
 
-    const TICKET_TYPES = ['ticket_reply', 'ticket_pinned', 'ticket_resolved']
+    const TICKET_TYPES = ['ticket_reply', 'ticket_pinned', 'ticket_resolved', 'ticket_waiting_feedback']
 
     const handleSelect = async (n) => {
         setSelected(n)
@@ -158,7 +161,7 @@ const Notifications = () => {
     const handleNotifFileChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
-        if (file.size > 7.5 * 1024 * 1024) { setNotifFileError('File size must be 10MB or less.'); e.target.value = ''; return }
+        if (file.size > 750 * 1024) { setNotifFileError('File must be under 1MB.'); e.target.value = ''; return }
         setNotifFileError('')
         const reader = new FileReader()
         reader.onload = (ev) => setNotifFile({ data: ev.target.result, name: file.name, type: file.type })
@@ -239,6 +242,13 @@ const Notifications = () => {
                         View Ticket
                     </Button>
                 )}
+                {n.type === 'ticket_waiting_feedback' && n.relatedTicketId && (
+                    <Button size='sm' variant='outline' onClick={async () => {
+                        await api.patch(`/tickets/${n.relatedTicketId}/status/`, { status: 'resolved' })
+                    }}>
+                        Confirm Resolved
+                    </Button>
+                )}
                 {n.fileData && (
                     <div className='flex flex-col gap-1'>
                         <p className='text-xs opacity-40 uppercase tracking-wider' style={{ color: theme.textColor }}>Attachment</p>
@@ -304,7 +314,7 @@ const Notifications = () => {
                 ) : (
                     <div className='flex gap-6 items-start'>
                         {/* Left — Timeline */}
-                        <div className='flex flex-col gap-6 w-full md:w-[420px] flex-shrink-0'>
+                        <div className='flex flex-col gap-6 w-full md:w-[420px] flex-shrink-0 overflow-y-auto max-h-[78vh] pr-1'>
                             {Object.entries(grouped).map(([label, items]) => (
                                 <div key={label} className='flex flex-col gap-2'>
                                     <div className='flex items-center gap-3'>
@@ -361,16 +371,10 @@ const Notifications = () => {
                                 {[
                                     { label: 'Total', value: notifications.length, color: theme.primaryColor },
                                     { label: 'Unread', value: unreadCount, color: '#f59e0b' },
-                                    ...Object.entries(
-                                        notifications.reduce((acc, n) => {
-                                            const key = TYPE_LABEL[n.type] ?? n.type
-                                            acc[key] = (acc[key] || 0) + 1
-                                            return acc
-                                        }, {})
-                                    ).map(([label, value]) => ({
+                                    ...Object.entries(TYPE_LABEL).map(([key, label]) => ({
                                         label,
-                                        value,
-                                        color: TYPE_COLOR[Object.keys(TYPE_LABEL).find(k => TYPE_LABEL[k] === label)] || theme.primaryColor
+                                        value: notifications.filter(n => n.type === key).length,
+                                        color: TYPE_COLOR[key],
                                     }))
                                 ].map(({ label, value, color }) => (
                                     <div key={label} className='rounded-xl p-4 flex flex-col gap-1'
@@ -481,11 +485,14 @@ const Notifications = () => {
                                 <button onClick={() => setNotifFile(null)}><MdClose size={14} color={theme.textColor} /></button>
                             </div>
                         ) : (
-                            <button onClick={() => notifFileInputRef.current?.click()}
-                                className='flex items-center gap-1 text-xs opacity-60 hover:opacity-100 transition-opacity'
-                                style={{ color: theme.primaryColor }}>
-                                <MdAttachFile size={16} /> Attach File
-                            </button>
+                            <div className='flex flex-col gap-0.5'>
+                                <button onClick={() => notifFileInputRef.current?.click()}
+                                    className='flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all hover:opacity-80'
+                                    style={{ color: theme.primaryColor, borderColor: theme.primaryColor, backgroundColor: theme.primaryColor + '10' }}>
+                                    <MdAttachFile size={15} /> Attach File
+                                </button>
+                                <p className='text-xs opacity-40' style={{ color: theme.textColor }}>Max file size: 1MB</p>
+                            </div>
                         )}
                         {notifFileError && <p className='text-xs' style={{ color: theme.dangerColor }}>{notifFileError}</p>}
                     </div>

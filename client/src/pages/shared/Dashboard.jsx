@@ -97,7 +97,7 @@ const TicketChart = ({ data, theme, title = 'Ticket Activity' }) => (
                     title: { display: true, text: title, color: theme.textColor, font: { size: 14, weight: 'bold' } },
                 },
                 scales: {
-                    y: { beginAtZero: true, ticks: { color: theme.textColor }, grid: { color: theme.textColor + '10' } },
+                    y: { beginAtZero: true, ticks: { color: theme.textColor, precision: 0 }, grid: { color: theme.textColor + '10' } },
                     x: { ticks: { color: theme.textColor }, grid: { display: false } },
                 },
             }}

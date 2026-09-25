@@ -5,14 +5,16 @@ import { MdSearch, MdMenuBook, MdPushPin, MdSend, MdAttachFile, MdClose, MdInser
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import FarmerLayout from '../../components/layout/FarmerLayout'
 import Dialog from '../../components/ui/Dialog'
+import Button from '../../components/ui/Button'
 import api from '../../services/api'
 
-const STATUS_TABS = ['all', 'pending', 'ongoing', 'resolved']
+const STATUS_TABS = ['all', 'pending', 'ongoing', 'waiting_for_feedback', 'resolved']
 
 const statusStyle = {
-    pending:  { bg: '#fef9c3', color: '#ca8a04' },
-    ongoing:  { bg: '#dbeafe', color: '#1d4ed8' },
-    resolved: { bg: '#dcfce7', color: '#16a34a' },
+    pending:             { bg: '#fef9c3', color: '#ca8a04' },
+    ongoing:             { bg: '#dbeafe', color: '#1d4ed8' },
+    waiting_for_feedback:{ bg: '#fce7f3', color: '#be185d' },
+    resolved:            { bg: '#dcfce7', color: '#16a34a' },
 }
 
 const formatDate = (iso) => {
@@ -165,7 +167,7 @@ const FarmerKnowledgeRepository = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
-        if (file.size > 7.5 * 1024 * 1024) { setFileError('File size must be 10MB or less.'); e.target.value = ''; return }
+        if (file.size > 750 * 1024) { setFileError('File must be under 1MB.'); e.target.value = ''; return }
         setFileError('')
         const reader = new FileReader()
         reader.onload = (ev) => setAttachedFile({ data: ev.target.result, name: file.name, type: file.type })
@@ -235,12 +237,13 @@ const FarmerKnowledgeRepository = () => {
                                 className='flex flex-col gap-2 p-4 rounded-xl cursor-pointer transition-all hover:shadow-md'
                                 style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}` }}>
                                 <div className='flex items-start justify-between gap-2'>
-                                    <p className='text-sm font-medium line-clamp-2' style={{ color: theme.textColor }}>{ticket.concern}</p>
+                                    <p className='text-sm font-semibold line-clamp-1' style={{ color: theme.textColor }}>{ticket.title || ticket.concern}</p>
                                     <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium capitalize'
                                         style={{ backgroundColor: statusStyle[ticket.status]?.bg, color: statusStyle[ticket.status]?.color }}>
                                         {ticket.status}
                                     </span>
                                 </div>
+                                {ticket.title && <p className='text-xs opacity-60 line-clamp-1' style={{ color: theme.textColor }}>{ticket.concern}</p>}
                                 <div className='flex items-center justify-between'>
                                     <p className='text-xs opacity-50' style={{ color: theme.textColor }}>
                                         {ticket.extensionWorkerName}
@@ -271,8 +274,9 @@ const FarmerKnowledgeRepository = () => {
                             </span>
                         </div>
 
-                        {/* Concern */}
+                        {/* Title + Concern */}
                         <div className='flex flex-col gap-1'>
+                            {selected.title && <p className='text-base font-semibold' style={{ color: theme.textColor }}>{selected.title}</p>}
                             <p className='text-xs opacity-50' style={{ color: theme.textColor }}>Concern</p>
                             <p className='text-sm p-3 rounded-lg' style={{ backgroundColor: theme.primaryColor + '10', color: theme.textColor }}>
                                 {selected.concern}
@@ -373,11 +377,14 @@ const FarmerKnowledgeRepository = () => {
                                 )}
                                 <div className='flex gap-2'>
                                     <input ref={fileInputRef} type='file' className='hidden' onChange={handleFileChange} />
-                                    <button onClick={() => fileInputRef.current?.click()}
-                                        className='px-3 rounded-lg'
-                                        style={{ backgroundColor: theme.primaryColor + '18', borderRadius: theme.borderRadius }}>
-                                        <MdAttachFile size={18} color={theme.primaryColor} />
-                                    </button>
+                                    <div className='flex flex-col gap-0.5'>
+                                        <button onClick={() => fileInputRef.current?.click()}
+                                            className='flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all hover:opacity-80'
+                                            style={{ color: theme.primaryColor, borderColor: theme.primaryColor, backgroundColor: theme.primaryColor + '10' }}>
+                                            <MdAttachFile size={15} /> Attach
+                                        </button>
+                                        <p className='text-xs opacity-40 text-center' style={{ color: theme.textColor }}>1MB</p>
+                                    </div>
                                     {fileError && <p className='text-xs self-center' style={{ color: theme.dangerColor }}>{fileError}</p>}
                                     <input value={reply} onChange={e => { setReply(e.target.value); setFileError('') }}
                                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSendReply()}
@@ -397,9 +404,16 @@ const FarmerKnowledgeRepository = () => {
                         )}
 
                         {/* Close */}
-                        <div className='flex justify-end'>
+                        <div className='flex justify-between items-center'>
+                            {selected.status === 'waiting_for_feedback' && selected.participants?.[0] === user?.id && (
+                                <Button size='sm' onClick={async () => {
+                                    await api.patch(`/tickets/${selected.id}/status/`, { status: 'resolved' })
+                                }} loading={sending}>
+                                    Confirm Resolved
+                                </Button>
+                            )}
                             <button onClick={() => setSelected(null)}
-                                className='px-4 py-2 text-sm font-medium opacity-60 hover:opacity-100 transition-opacity'
+                                className='ml-auto px-4 py-2 text-sm font-medium opacity-60 hover:opacity-100 transition-opacity'
                                 style={{ color: theme.textColor }}>
                                 Close
                             </button>

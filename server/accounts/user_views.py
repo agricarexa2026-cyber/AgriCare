@@ -167,8 +167,8 @@ class SendNotificationView(APIView):
         file_type = request.data.get('fileType', '')
         if not user_ids or not notif_type or not message:
             return Response({'error': 'userIds, type, and message are required'}, status=status.HTTP_400_BAD_REQUEST)
-        if file_data and len(file_data.encode('utf-8')) > 10485760:
-            return Response({'error': 'File size must be 10MB or less.'}, status=status.HTTP_400_BAD_REQUEST)
+        if file_data and len(file_data.encode('utf-8')) > 1048576:
+            return Response({'error': 'File must be under 1MB.'}, status=status.HTTP_400_BAD_REQUEST)
         notif = {'type': notif_type, 'message': message}
         for user_id in user_ids:
             create_notification(user_id, notif_type, message, request.user.id, '', file_data, file_name, file_type)

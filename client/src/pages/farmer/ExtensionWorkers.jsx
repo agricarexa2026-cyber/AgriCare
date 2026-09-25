@@ -20,6 +20,7 @@ const FarmerExtensionWorkers = () => {
     const [existingTicketDialog, setExistingTicketDialog] = useState(false)
     const [existingTicket, setExistingTicket] = useState(null)
     const [concern, setConcern] = useState('')
+    const [title, setTitle] = useState('')
     const [attachedFile, setAttachedFile] = useState(null)
     const [fileError, setFileError] = useState('')
     const [submitting, setSubmitting] = useState(false)
@@ -58,6 +59,7 @@ const FarmerExtensionWorkers = () => {
 
     const handleOpenTicketForm = () => {
         setConcern('')
+        setTitle('')
         setAttachedFile(null)
         setFileError('')
         setViewDialog(false)
@@ -67,7 +69,7 @@ const FarmerExtensionWorkers = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
-        if (file.size > 7.5 * 1024 * 1024) { setFileError('File size must be 10MB or less.'); e.target.value = ''; return }
+        if (file.size > 750 * 1024) { setFileError('File must be under 1MB.'); e.target.value = ''; return }
         setFileError('')
         const reader = new FileReader()
         reader.onload = (ev) => setAttachedFile({ data: ev.target.result, name: file.name, type: file.type })
@@ -76,10 +78,11 @@ const FarmerExtensionWorkers = () => {
     }
 
     const handleCheckTicket = async () => {
-        if (!concern.trim()) return
+        if (!title.trim() || !concern.trim()) return
         setSubmitting(true)
         try {
             const res = await api.post('/tickets/check/', {
+                title,
                 concern,
                 extensionWorkerId: selectedWorker.id,
             })
@@ -102,6 +105,7 @@ const FarmerExtensionWorkers = () => {
         setSubmitting(true)
         try {
             await api.post('/tickets/submit/', {
+                title,
                 concern,
                 extensionWorkerId: selectedWorker.id,
                 extensionWorkerName: `${selectedWorker.firstName} ${selectedWorker.lastName}`,
@@ -114,6 +118,7 @@ const FarmerExtensionWorkers = () => {
             })
             setExistingTicketDialog(false)
             setConcern('')
+            setTitle('')
             setAttachedFile(null)
             setExistingTicket(null)
         } catch {
@@ -227,6 +232,13 @@ const FarmerExtensionWorkers = () => {
                             style={{ borderColor: theme.secondaryColor, backgroundColor: '#f9f9f9', color: theme.textColor }} />
                     </div>
                     <div className='flex flex-col gap-1'>
+                        <label className='text-xs font-medium' style={{ color: theme.textColor }}>Title</label>
+                        <input value={title} onChange={e => setTitle(e.target.value)}
+                            placeholder='Brief title of your concern...'
+                            className='w-full px-4 py-2.5 text-sm outline-none border rounded-lg'
+                            style={{ borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
+                    </div>
+                    <div className='flex flex-col gap-1'>
                         <label className='text-xs font-medium' style={{ color: theme.textColor }}>Concern</label>
                         <textarea value={concern} onChange={e => { setConcern(e.target.value); setFileError('') }}
                             placeholder='Describe your concern...'
@@ -249,14 +261,17 @@ const FarmerExtensionWorkers = () => {
                     <input ref={fileInputRef} type='file' className='hidden' onChange={handleFileChange} />
                     {fileError && <p className='text-xs' style={{ color: theme.dangerColor }}>{fileError}</p>}
                     <div className='flex justify-between items-center'>
-                        <button onClick={() => fileInputRef.current?.click()}
-                            className='flex items-center gap-1 text-xs opacity-60 hover:opacity-100 transition-opacity'
-                            style={{ color: theme.primaryColor }}>
-                            <MdAttachFile size={16} /> Attach File
-                        </button>
+                        <div className='flex flex-col gap-0.5'>
+                            <button onClick={() => fileInputRef.current?.click()}
+                                className='flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all hover:opacity-80'
+                                style={{ color: theme.primaryColor, borderColor: theme.primaryColor, backgroundColor: theme.primaryColor + '10' }}>
+                                <MdAttachFile size={15} /> Attach File
+                            </button>
+                            <p className='text-xs opacity-40' style={{ color: theme.textColor }}>Max file size: 1MB</p>
+                        </div>
                         <div className='flex gap-2'>
                             <Button variant='ghost' onClick={() => setTicketDialog(false)}>Cancel</Button>
-                            <Button onClick={handleCheckTicket} disabled={!concern.trim() || submitting}>
+                            <Button onClick={handleCheckTicket} disabled={!title.trim() || !concern.trim() || submitting}>
                                 {submitting ? 'Checking...' : 'Next'}
                             </Button>
                         </div>
@@ -277,7 +292,8 @@ const FarmerExtensionWorkers = () => {
                                 A ticket about a similar concern already exists. Would you like to join the conversation?
                             </p>
                             <div className='p-3 rounded-lg text-sm' style={{ backgroundColor: theme.primaryColor + '10', border: `1px solid ${theme.secondaryColor}` }}>
-                                <p className='font-medium' style={{ color: theme.textColor }}>{existingTicket.concern}</p>
+                                <p className='font-semibold' style={{ color: theme.textColor }}>{existingTicket.title}</p>
+                                <p className='text-xs opacity-60 mt-0.5' style={{ color: theme.textColor }}>{existingTicket.concern}</p>
                                 <span className='text-xs mt-1 inline-block px-2 py-0.5 rounded-full'
                                     style={{
                                         backgroundColor: existingTicket.status === 'pending' ? '#fef9c3' : existingTicket.status === 'ongoing' ? '#dbeafe' : '#dcfce7',

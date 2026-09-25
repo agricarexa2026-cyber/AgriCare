@@ -164,18 +164,15 @@ class ForgotPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = ForgotPasswordSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        email = request.data.get('email', '').strip()
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        identifier = serializer.validated_data['identifier']
-        user = get_user_by_identifier(identifier)
-
+        user = get_user_by_email(email)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        success = send_otp(user['mobileNumber'])
-
+        success = send_otp(user['mobileNumber'], email=email)
         if not success:
             return Response({'error': 'Failed to send OTP'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -186,28 +183,22 @@ class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = ResetPasswordSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+        if not email or not password:
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        identifier = serializer.validated_data['identifier']
-        password = serializer.validated_data['password']
-
-        user = get_user_by_identifier(identifier)
-
+        user = get_user_by_email(email)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if not is_otp_verified(user['mobileNumber']):
-            return Response({'error': 'OTP not verified. Please verify OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'OTP not verified.'}, status=status.HTTP_400_BAD_REQUEST)
         clear_otp_verified(user['mobileNumber'])
 
         import hashlib
         double_hash = hashlib.sha256(password.encode()).hexdigest()
-        update_user(user['id'], {
-            'passwordHash': double_hash,
-            'isResetPass': False,
-        })
+        update_user(user['id'], {'passwordHash': double_hash, 'isResetPass': False})
         return Response({'message': 'Password reset successfully'})
      
 class CheckUsernameView(APIView):
@@ -267,6 +258,7 @@ class CompleteRegistrationView(APIView):
         user_data['barangay'] = data.get('barangay', '')
         user_data['username'] = data['username']
         user_data['positionId'] = data.get('positionId', '')
+        # supabaseId already in user_data from pending registration if Supabase auth was used
 
         user_id = create_user(user_data)
         mark_registration_completed(mobile_number)

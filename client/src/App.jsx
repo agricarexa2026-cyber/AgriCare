@@ -15,6 +15,7 @@ import LandingPage from './pages/LandingPage'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 import PendingApproval from './pages/auth/PendingApproval'
 
 import FarmersAccounts from './pages/admin/FarmersAccounts'
@@ -165,6 +166,7 @@ function App() {
             <Route path='/backdoor' element={<Navigate to='/admin-login' replace />} />
             <Route path='/register' element={<Register />} />
             <Route path='/forgot-password' element={<ForgotPassword />} />
+            <Route path='/reset-password' element={<ResetPassword />} />
             <Route path='/pending-approval' element={<PendingApproval />} />
 
             {/* Shared */}

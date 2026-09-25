@@ -135,7 +135,6 @@ class SupabaseForgotPasswordView(APIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            supabase.auth.reset_password_email(email)
             return Response({'message': 'Password reset email sent'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -152,8 +151,12 @@ class SupabaseResetPasswordView(APIView):
             return Response({'error': 'accessToken and password are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            supabase.auth.set_session(access_token, '')
-            supabase.auth.update_user({'password': new_password})
+            res = supabase_anon.auth.exchange_code_for_session({'auth_code': access_token})
+            if res.session:
+                supabase_anon.auth.update_user({'password': new_password})
+            else:
+                supabase.auth.set_session(access_token, '')
+                supabase.auth.update_user({'password': new_password})
             return Response({'message': 'Password reset successfully'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
