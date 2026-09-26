@@ -63,7 +63,7 @@ const StatCards = ({ items }) => {
                     style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}20` }}>
                     <div className='flex items-center justify-between'>
                         <div>
-                            <p className='text-xs font-medium opacity-50 mb-1' style={{ color: theme.textColor }}>{label}</p>
+                            <p className='text-sm font-semibold opacity-50 mb-1' style={{ color: theme.textColor }}>{label}</p>
                             <p className='text-3xl font-bold' style={{ color: theme.textColor }}>{value ?? '...'}</p>
                         </div>
                         <div className='p-3 rounded-xl' style={{ backgroundColor: color + '15' }}>

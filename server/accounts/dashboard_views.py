@@ -422,6 +422,29 @@ class WorkerLogsView(APIView):
             return Response({'rows': rows, 'weekLabel': f'{week_start} – {week_end}'})
 
 
+class OnlineWorkersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.role != 'admin':
+            return Response({'error': 'Forbidden'}, status=403)
+        docs = db.collection(USERS_COLLECTION).where('role', '==', 'extension_worker').get()
+        workers = []
+        for doc in docs:
+            data = doc.to_dict()
+            if data.get('isPending') or not data.get('isActive'):
+                continue
+            workers.append({
+                'id': doc.id,
+                'name': f"{data.get('firstName', '')} {data.get('lastName', '')}".strip(),
+                'position': data.get('positionId', ''),
+            })
+        position_docs = {d.id: d.to_dict().get('name', '') for d in db.collection('positions').get()}
+        for w in workers:
+            w['position'] = position_docs.get(w['position'], 'Unknown')
+        return Response({'workers': workers})
+
+
 class FarmersByMonthView(APIView):
     permission_classes = [IsAuthenticated]
 

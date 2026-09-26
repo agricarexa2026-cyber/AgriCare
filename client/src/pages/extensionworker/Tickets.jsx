@@ -9,6 +9,13 @@ import Button from '../../components/ui/Button'
 import api from '../../services/api'
 
 const STATUS_TABS = ['all', 'pending', 'ongoing', 'waiting_for_feedback', 'resolved']
+const STATUS_LABEL = {
+    all: 'All',
+    pending: 'Pending',
+    ongoing: 'Ongoing',
+    waiting_for_feedback: 'Waiting for Feedback',
+    resolved: 'Resolved',
+}
 
 const statusStyle = {
     pending:             { bg: '#fef9c3', color: '#ca8a04' },
@@ -87,7 +94,9 @@ const ExtensionWorkerTickets = () => {
         }
     }, [location.state?.ticketId, tickets.length])
 
-    const filtered = tickets.filter(t => {
+    const sorted = [...tickets].sort((a, b) => new Date(b.date) - new Date(a.date))
+
+    const filtered = sorted.filter(t => {
         const matchTab = activeTab === 'all' || t.status === activeTab
         const matchSearch = t.concern.toLowerCase().includes(search.toLowerCase())
         return matchTab && matchSearch
@@ -198,12 +207,12 @@ const ExtensionWorkerTickets = () => {
                 <div className='flex gap-2 overflow-x-auto pb-1'>
                     {STATUS_TABS.map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
-                            className='px-3 py-1 rounded-full text-xs font-medium capitalize transition-all'
+                            className='px-3 py-1 rounded-full text-xs font-medium transition-all'
                             style={{
                                 backgroundColor: activeTab === tab ? theme.primaryColor : theme.primaryColor + '18',
                                 color: activeTab === tab ? '#fff' : theme.primaryColor,
                             }}>
-                            {tab}
+                            {STATUS_LABEL[tab]}
                         </button>
                     ))}
                 </div>
@@ -227,9 +236,9 @@ const ExtensionWorkerTickets = () => {
                                 style={{ backgroundColor: '#fff', border: `1px solid ${theme.secondaryColor}` }}>
                                 <div className='flex items-start justify-between gap-2'>
                                     <p className='text-sm font-semibold line-clamp-1' style={{ color: theme.textColor }}>{ticket.title || ticket.concern}</p>
-                                    <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium capitalize'
+                                    <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium'
                                         style={{ backgroundColor: statusStyle[ticket.status]?.bg, color: statusStyle[ticket.status]?.color }}>
-                                        {ticket.status}
+                                        {STATUS_LABEL[ticket.status] ?? ticket.status}
                                     </span>
                                 </div>
                                 {ticket.title && <p className='text-xs opacity-60 line-clamp-1' style={{ color: theme.textColor }}>{ticket.concern}</p>}
@@ -252,9 +261,9 @@ const ExtensionWorkerTickets = () => {
                         {/* Header */}
                         <div className='flex items-center justify-between gap-3'>
                             <p className='text-sm font-medium' style={{ color: theme.textColor }}>{formatDate(selected.date)}</p>
-                            <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium capitalize'
+                            <span className='shrink-0 px-2 py-0.5 rounded-full text-xs font-medium'
                                 style={{ backgroundColor: statusStyle[selected.status]?.bg, color: statusStyle[selected.status]?.color }}>
-                                {selected.status}
+                                {STATUS_LABEL[selected.status] ?? selected.status}
                             </span>
                         </div>
 

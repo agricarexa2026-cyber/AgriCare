@@ -42,6 +42,8 @@ const Reports = () => {
     const [weekOffset, setWeekOffset] = useState(0)
     const [workerWeekLabel, setWorkerWeekLabel] = useState('')
     const [workerLoading, setWorkerLoading] = useState(false)
+    const [onlineWorkers, setOnlineWorkers] = useState(null)
+    const [onlineLoading, setOnlineLoading] = useState(false)
 
     const fetchStats = () => {
         api.get('/dashboard/reports/').then(res => {
@@ -234,11 +236,23 @@ const Reports = () => {
         fetchWorkerLogs('weekly', workerYear, newOffset)
     }
 
+    const handleOnlineCardClick = async (e) => {
+        e.stopPropagation()
+        setOnlineLoading(true)
+        setOnlineWorkers([])
+        try {
+            const res = await api.get('/dashboard/reports/online-workers/')
+            setOnlineWorkers(res.data.workers)
+        } finally {
+            setOnlineLoading(false)
+        }
+    }
+
     const workerInnerCards = [
-        { label: 'Total E-Workers', value: stats?.workers.total ?? 0, icon: MdSupportAgent, color: theme.primaryColor },
-        { label: 'Online', value: stats?.workers.active ?? 0, icon: MdCheckCircle, color: '#22c55e' },
-        { label: 'Offline', value: stats?.workers.inactive ?? 0, icon: MdCancel, color: '#ef4444' },
-        { label: 'Deleted', value: stats?.workers.deleted ?? 0, icon: MdDeleteForever, color: '#6b7280' },
+        { label: 'Total E-Workers', value: stats?.workers.total ?? 0, icon: MdSupportAgent, color: theme.primaryColor, onClick: null },
+        { label: 'Online', value: stats?.workers.active ?? 0, icon: MdCheckCircle, color: '#22c55e', onClick: handleOnlineCardClick },
+        { label: 'Offline', value: stats?.workers.inactive ?? 0, icon: MdCancel, color: '#ef4444', onClick: null },
+        { label: 'Deleted', value: stats?.workers.deleted ?? 0, icon: MdDeleteForever, color: '#6b7280', onClick: null },
     ]
 
     return (
@@ -280,7 +294,9 @@ const Reports = () => {
                             <p className='text-sm font-medium opacity-60' style={{ color: theme.textColor }}>Extension Worker Status</p>
                             <div className='grid grid-cols-2 gap-3'>
                                 {workerInnerCards.map(card => (
-                                    <div key={card.label} className='flex items-center gap-3 p-3 rounded-lg'
+                                    <div key={card.label}
+                                        onClick={card.onClick ?? undefined}
+                                        className={`flex items-center gap-3 p-3 rounded-lg ${card.onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                                         style={{ backgroundColor: card.color + '12', border: `1px solid ${card.color}30` }}>
                                         <card.icon size={20} color={card.color} />
                                         <div>
@@ -447,6 +463,34 @@ const Reports = () => {
                         </div>
                     </div>
                 )}
+            </Dialog>
+            {/* Online Workers Dialog */}
+            <Dialog isOpen={onlineWorkers !== null} onClose={() => setOnlineWorkers(null)} title='Online Extension Workers'>
+                <div className='flex flex-col gap-4 w-full sm:w-[min(400px,90vw)]'>
+                    {onlineLoading ? (
+                        <div className='flex justify-center py-8'>
+                            <AiOutlineLoading3Quarters className='animate-spin' size={22} color={theme.primaryColor} />
+                        </div>
+                    ) : onlineWorkers?.length === 0 ? (
+                        <p className='text-sm text-center opacity-50 py-4' style={{ color: theme.textColor }}>No online workers</p>
+                    ) : (
+                        <div className='flex flex-col gap-2'>
+                            {onlineWorkers?.map(w => (
+                                <div key={w.id} className='flex items-center justify-between px-3 py-2 rounded-lg'
+                                    style={{ backgroundColor: '#22c55e12', border: '1px solid #22c55e30' }}>
+                                    <div className='flex items-center gap-2'>
+                                        <MdCheckCircle size={16} color='#22c55e' />
+                                        <p className='text-sm font-medium' style={{ color: theme.textColor }}>{w.name}</p>
+                                    </div>
+                                    <p className='text-xs opacity-50' style={{ color: theme.textColor }}>{w.position}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <div className='flex justify-end'>
+                        <Button size='sm' variant='ghost' onClick={() => setOnlineWorkers(null)}>Close</Button>
+                    </div>
+                </div>
             </Dialog>
         </AdminLayout>
     )
