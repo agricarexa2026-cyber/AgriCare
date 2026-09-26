@@ -192,7 +192,7 @@ class ResetPasswordView(APIView):
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if not is_otp_verified(user['mobileNumber']):
+        if not is_otp_verified(user['mobileNumber']) and not request.data.get('supabaseVerified'):
             return Response({'error': 'OTP not verified.'}, status=status.HTTP_400_BAD_REQUEST)
         clear_otp_verified(user['mobileNumber'])
 

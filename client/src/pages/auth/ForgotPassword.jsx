@@ -17,45 +17,38 @@ const ForgotPassword = () => {
     const [loadingMessage, setLoadingMessage] = useState(null)
     const [step, setStep] = useState(1)
     const [identifier, setIdentifier] = useState('')
-    const [mobileNumber, setMobileNumber] = useState('')
     const [otp, setOtp] = useState('')
     const [form, setForm] = useState({ password: '', confirmPassword: '' })
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-
-    const useSupabaseAuth = theme?.useSupabaseAuth ?? false
 
     const handleStep1 = async (e) => {
         e.preventDefault()
         setLoadingMessage('Sending OTP...')
-        setLoading(true)
         setError(null)
         try {
-            const res = await api.post('/auth/forgot-password/', { email: identifier })
-            setMobileNumber(res.data.mobileNumber)
+            const { error } = await supabase.auth.resetPasswordForEmail(identifier)
+            if (error) throw error
             setStep(2)
         } catch (err) {
-            setError(err.response?.data?.error || 'User not found. Please try again.')
+            setError(err.message || 'User not found. Please try again.')
         } finally {
             setLoadingMessage(null)
-            setLoading(false)
         }
     }
 
     const handleStep2 = async (e) => {
         e.preventDefault()
         setLoadingMessage('Verifying OTP...')
-        setLoading(true)
         setError(null)
         try {
-            await api.post('/auth/verify-otp/', { mobileNumber, otp })
+            const { error } = await supabase.auth.verifyOtp({ email: identifier, token: otp, type: 'recovery' })
+            if (error) throw error
             setStep(3)
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid OTP. Please try again.')
+            setError(err.message || 'Invalid OTP. Please try again.')
         } finally {
-            setLoading(false)
             setLoadingMessage(null)
         }
     }
@@ -64,16 +57,14 @@ const ForgotPassword = () => {
         e.preventDefault()
         if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
         setLoadingMessage('Resetting password...')
-        setLoading(true)
         setError(null)
         try {
             const hashedPassword = await sha256(form.password)
-            await api.post('/auth/reset-password/', { email: identifier, password: hashedPassword })
+            await api.post('/auth/reset-password/', { email: identifier, password: hashedPassword, supabaseVerified: true })
             setStep(4)
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to reset password. Please try again.')
         } finally {
-            setLoading(false)
             setLoadingMessage(null)
         }
     }
