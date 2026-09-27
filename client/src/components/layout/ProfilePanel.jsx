@@ -197,7 +197,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
                 {changePassStep === 'otp' && (
                     <div className='flex flex-col gap-3'>
                         <p className='text-sm' style={{ color: theme.textColor }}>Enter the OTP sent to your email:</p>
-                        <input value={otp} onChange={e => setOtp(e.target.value)} placeholder='Enter OTP' maxLength={6}
+                        <input value={otp} onChange={e => setOtp(e.target.value)} placeholder='Enter OTP' maxLength={8}
                             className='w-full px-4 py-2.5 text-sm outline-none border text-center tracking-widest'
                             style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
                         <div className='flex gap-2'>

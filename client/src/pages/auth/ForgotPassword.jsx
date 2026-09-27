@@ -113,7 +113,7 @@ const ForgotPassword = () => {
                             </p>
                             <div className='flex flex-col gap-1'>
                                 <label className='text-sm font-medium' style={{ color: theme.textColor }}>Enter OTP</label>
-                                <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder='Enter OTP' required maxLength={6}
+                                <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder='Enter OTP' required maxLength={8}
                                     className='w-full px-4 py-2.5 text-sm outline-none border text-center tracking-widest'
                                     style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
                             </div>
