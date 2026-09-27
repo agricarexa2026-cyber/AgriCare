@@ -2,10 +2,10 @@ import { useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { sha256 } from '../../utils/crypto'
+import supabase from '../../services/supabase'
 import { MdLock, MdLogout, MdDashboard, MdViewSidebar, MdCameraAlt } from 'react-icons/md'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { clearCredentials, updateProfilePicture } from '../../store/slices/authSlice'
-import { setAppLoading } from '../../store/slices/appSlice'
 import { deleteCookie } from '../../utils/cookies'
 import useLayout from '../../hooks/useLayout'
 import Confirmation from '../ui/Confirmation'
@@ -41,10 +41,11 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setLoading(true)
         setError(null)
         try {
-            await api.post('/auth/forgot-password/', { identifier: user?.mobileNumber || user?.username })
+            const { error } = await supabase.auth.resetPasswordForEmail(user?.email)
+            if (error) throw error
             setChangePassStep('otp')
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to send OTP')
+            setError(err.message || 'Failed to send OTP')
         } finally {
             setLoading(false)
         }
@@ -54,10 +55,11 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setLoading(true)
         setError(null)
         try {
-            await api.post('/auth/verify-otp/', { mobileNumber: user?.mobileNumber, otp })
+            const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'recovery' })
+            if (error) throw error
             setChangePassStep('newpass')
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid OTP')
+            setError(err.message || 'Invalid OTP')
         } finally {
             setLoading(false)
         }
@@ -69,7 +71,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setError(null)
         try {
             const hashedPassword = await sha256(newPassword)
-            await api.post('/auth/reset-password/', { identifier: user?.mobileNumber || user?.username, password: hashedPassword })
+            await api.post('/auth/reset-password/', { email: user?.email, password: hashedPassword, supabaseVerified: true })
             setSuccess('Password changed successfully!')
             setChangePassStep(null)
             setOtp('')
@@ -194,7 +196,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
                 {/* OTP Step */}
                 {changePassStep === 'otp' && (
                     <div className='flex flex-col gap-3'>
-                        <p className='text-sm' style={{ color: theme.textColor }}>Enter the OTP sent to your email/mobile:</p>
+                        <p className='text-sm' style={{ color: theme.textColor }}>Enter the OTP sent to your email:</p>
                         <input value={otp} onChange={e => setOtp(e.target.value)} placeholder='Enter OTP' maxLength={6}
                             className='w-full px-4 py-2.5 text-sm outline-none border text-center tracking-widest'
                             style={{ borderRadius: theme.borderRadius, borderColor: theme.secondaryColor, backgroundColor: '#fff', color: theme.textColor }} />
