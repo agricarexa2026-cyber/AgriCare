@@ -43,7 +43,7 @@ const ForgotPassword = () => {
         setLoadingMessage('Verifying OTP...')
         setError(null)
         try {
-            const { error } = await supabase.auth.verifyOtp({ email: identifier, token: otp, type: 'recovery' })
+            const { error } = await supabase.auth.verifyOtp({ email: identifier, token: otp, type: 'email' })
             if (error) throw error
             setStep(3)
         } catch (err) {

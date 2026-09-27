@@ -55,7 +55,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setLoading(true)
         setError(null)
         try {
-            const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'recovery' })
+            const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'email' })
             if (error) throw error
             setChangePassStep('newpass')
         } catch (err) {
