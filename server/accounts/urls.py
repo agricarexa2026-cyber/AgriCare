@@ -25,4 +25,5 @@ urlpatterns = [
     path('supabase/forgot-password/', SupabaseForgotPasswordView.as_view(), name='supabase-forgot-password'),
     path('supabase/reset-password/', SupabaseResetPasswordView.as_view(), name='supabase-reset-password'),
     path('supabase/update-password/', SupabaseUpdatePasswordView.as_view(), name='supabase-update-password'),
+    path('supabase/me/', SupabaseMeView.as_view(), name='supabase-me'),
 ]
