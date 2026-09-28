@@ -28,7 +28,7 @@ const ForgotPassword = () => {
         setLoadingMessage('Sending OTP...')
         setError(null)
         try {
-            const { error } = await supabase.auth.signInWithOtp({ email: identifier, options: { shouldCreateUser: false } })
+            const { error } = await supabase.auth.resetPasswordForEmail(identifier)
             if (error) throw error
             setStep(2)
         } catch (err) {
