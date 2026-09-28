@@ -135,10 +135,11 @@ class SupabaseUpdatePasswordView(APIView):
             user = get_user_by_email(email)
             if not user:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-            supabase_user = supabase.auth.admin.get_user_by_email(email)
-            if not supabase_user or not supabase_user.user:
+            res = supabase.auth.admin.list_users()
+            supabase_user = next((u for u in res if u.email == email), None)
+            if not supabase_user:
                 return Response({'error': 'Supabase user not found'}, status=status.HTTP_404_NOT_FOUND)
-            supabase.auth.admin.update_user_by_id(supabase_user.user.id, {'password': password})
+            supabase.auth.admin.update_user_by_id(supabase_user.id, {'password': password})
             return Response({'message': 'Password updated successfully'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
