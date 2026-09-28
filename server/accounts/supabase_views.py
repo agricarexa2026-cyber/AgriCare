@@ -220,4 +220,27 @@ class SupabaseMeView(APIView):
                 'positionName': position_name,
             })
         except Exception:
-            return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+            # fallback to custom JWT for admin
+            try:
+                from rest_framework_simplejwt.tokens import AccessToken
+                decoded = AccessToken(token)
+                user = get_user_by_id(decoded['user_id'])
+                if not user:
+                    return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+                position_name = ''
+                if user.get('positionId'):
+                    pos = get_position_by_id(user['positionId'])
+                    position_name = pos['name'] if pos else ''
+                return Response({
+                    'id': user['id'],
+                    'firstName': user['firstName'],
+                    'lastName': user['lastName'],
+                    'role': user['role'],
+                    'email': user.get('email', ''),
+                    'mobileNumber': user['mobileNumber'],
+                    'profilePicture': user.get('profilePicture', ''),
+                    'barangay': user.get('barangay', ''),
+                    'positionName': position_name,
+                })
+            except Exception:
+                return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
