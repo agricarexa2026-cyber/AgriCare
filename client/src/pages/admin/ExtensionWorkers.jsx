@@ -87,21 +87,30 @@ const ExtensionWorkers = () => {
     const statusLabel = (isPending, isActive) => isPending ? 'Pending' : isActive ? 'Active' : 'Inactive'
 
     const handleToggleActive = async () => {
-        await api.patch(`/users/extension-workers/${toggleConfirm.id}/toggle-active/`)
-        setToggleConfirm({ open: false, id: null, isActive: false })
-        fetchWorkers()
+        try {
+            await api.patch(`/users/extension-workers/${toggleConfirm.id}/toggle-active/`)
+            fetchWorkers()
+        } finally {
+            setToggleConfirm({ open: false, id: null, isActive: false })
+        }
     }
 
     const handleDelete = async () => {
-        await api.delete(`/users/extension-workers/${deleteConfirm.id}/`)
-        setDeleteConfirm({ open: false, id: null })
-        fetchWorkers()
+        try {
+            await api.delete(`/users/extension-workers/${deleteConfirm.id}/`)
+            fetchWorkers()
+        } finally {
+            setDeleteConfirm({ open: false, id: null })
+        }
     }
 
     const handleApprove = async () => {
-        await api.patch(`/users/extension-workers/${approveConfirm.id}/approve/`)
-        setApproveConfirm({ open: false, id: null })
-        fetchWorkers()
+        try {
+            await api.patch(`/users/extension-workers/${approveConfirm.id}/approve/`)
+            fetchWorkers()
+        } finally {
+            setApproveConfirm({ open: false, id: null })
+        }
     }
 
     const handleChangePosition = async () => {
