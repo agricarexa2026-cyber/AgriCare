@@ -29,7 +29,7 @@ const ForgotPassword = () => {
         setError(null)
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(identifier)
-            if (error) { console.log('Supabase error:', error); throw error }
+            if (error) throw error
             setStep(2)
         } catch (err) {
             setError(err.message || 'User not found. Please try again.')
@@ -61,7 +61,7 @@ const ForgotPassword = () => {
         try {
             const hashedPassword = await sha256(form.password)
             await api.post('/auth/reset-password/', { email: identifier, password: hashedPassword, supabaseVerified: true })
-            await supabase.auth.updateUser({ password: form.password })
+            await api.post('/auth/supabase/update-password/', { email: identifier, password: form.password })
             setStep(4)
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to reset password. Please try again.')

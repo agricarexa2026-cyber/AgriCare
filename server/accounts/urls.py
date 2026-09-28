@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import RegisterView, SendOTPView, VerifyOTPView, LoginView, ForgotPasswordView, ResetPasswordView, CheckUsernameView, CheckMobileView, CompleteRegistrationView, CheckPendingView, CheckEmailView, MeView
-from .supabase_views import SupabaseRegisterView, SupabaseVerifyOTPView, SupabaseLoginView, SupabaseForgotPasswordView, SupabaseResetPasswordView, SupabaseMeView
+from .supabase_views import SupabaseRegisterView, SupabaseVerifyOTPView, SupabaseLoginView, SupabaseForgotPasswordView, SupabaseResetPasswordView, SupabaseMeView, SupabaseUpdatePasswordView
 
 urlpatterns = [
     # Custom auth (fallback)
@@ -24,5 +24,5 @@ urlpatterns = [
     path('supabase/login/', SupabaseLoginView.as_view(), name='supabase-login'),
     path('supabase/forgot-password/', SupabaseForgotPasswordView.as_view(), name='supabase-forgot-password'),
     path('supabase/reset-password/', SupabaseResetPasswordView.as_view(), name='supabase-reset-password'),
-    path('supabase/me/', SupabaseMeView.as_view(), name='supabase-me'),
+    path('supabase/update-password/', SupabaseUpdatePasswordView.as_view(), name='supabase-update-password'),
 ]

@@ -123,6 +123,27 @@ class SupabaseLoginView(APIView):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+class SupabaseUpdatePasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        if not email or not password:
+            return Response({'error': 'email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = get_user_by_email(email)
+            if not user:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            supabase_user = supabase.auth.admin.get_user_by_email(email)
+            if not supabase_user or not supabase_user.user:
+                return Response({'error': 'Supabase user not found'}, status=status.HTTP_404_NOT_FOUND)
+            supabase.auth.admin.update_user_by_id(supabase_user.user.id, {'password': password})
+            return Response({'message': 'Password updated successfully'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class SupabaseForgotPasswordView(APIView):
     permission_classes = [AllowAny]
 

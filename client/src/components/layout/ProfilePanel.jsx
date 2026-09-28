@@ -87,7 +87,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
                 : { email: user?.email, password: hashedPassword }
             await api.post('/auth/reset-password/', payload)
             if (useSupabaseAuth && user?.role !== 'admin') {
-                await supabase.auth.updateUser({ password: newPassword })
+                await api.post('/auth/supabase/update-password/', { email: user?.email, password: newPassword })
             }
             setSuccess('Password changed successfully!')
             setChangePassStep(null)
