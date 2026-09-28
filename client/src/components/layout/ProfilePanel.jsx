@@ -44,8 +44,9 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setError(null)
         try {
             if (useSupabaseAuth && user?.role !== 'admin') {
+                if (!user?.email) throw new Error('Email not found. Please log out and log back in.')
                 const { error } = await supabase.auth.resetPasswordForEmail(user?.email)
-                if (error) { console.log('Supabase resetPassword error:', JSON.stringify(error)); throw error }
+                if (error) throw error
             } else {
                 await api.post('/auth/forgot-password/', { email: user?.email })
             }
