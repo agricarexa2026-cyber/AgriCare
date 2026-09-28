@@ -62,7 +62,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setError(null)
         try {
             if (useSupabaseAuth && user?.role !== 'admin') {
-                const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'email' })
+                const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'recovery' })
                 if (error) throw error
             } else {
                 await api.post('/auth/verify-otp/', { mobileNumber: user?.mobileNumber, otp })
