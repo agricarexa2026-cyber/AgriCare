@@ -29,7 +29,7 @@ const ForgotPassword = () => {
         setError(null)
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(identifier)
-            if (error) throw error
+            if (error) { console.log('Supabase error:', error); throw error }
             setStep(2)
         } catch (err) {
             setError(err.message || 'User not found. Please try again.')
