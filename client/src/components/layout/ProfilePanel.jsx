@@ -5,6 +5,7 @@ import { sha256 } from '../../utils/crypto'
 import supabase from '../../services/supabase'
 import { MdLock, MdLogout, MdDashboard, MdViewSidebar, MdCameraAlt } from 'react-icons/md'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
+import { setAppLoading } from '../../store/slices/appSlice'
 import { clearCredentials, updateProfilePicture } from '../../store/slices/authSlice'
 import { deleteCookie } from '../../utils/cookies'
 import useLayout from '../../hooks/useLayout'
@@ -18,6 +19,7 @@ const ProfilePanel = ({ isOpen, onClose }) => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const { layout, toggleLayout } = useLayout()
+    const useSupabaseAuth = useSelector((state) => state.theme.useSupabaseAuth) ?? false
 
     const [logoutConfirm, setLogoutConfirm] = useState(false)
     const [changePassStep, setChangePassStep] = useState(null) // null | 'otp' | 'newpass'
@@ -41,11 +43,15 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setLoading(true)
         setError(null)
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(user?.email)
-            if (error) throw error
+            if (useSupabaseAuth && user?.role !== 'admin') {
+                const { error } = await supabase.auth.resetPasswordForEmail(user?.email)
+                if (error) throw error
+            } else {
+                await api.post('/auth/forgot-password/', { email: user?.email })
+            }
             setChangePassStep('otp')
         } catch (err) {
-            setError(err.message || 'Failed to send OTP')
+            setError(err.message || err.response?.data?.error || 'Failed to send OTP')
         } finally {
             setLoading(false)
         }
@@ -55,11 +61,15 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setLoading(true)
         setError(null)
         try {
-            const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'email' })
-            if (error) throw error
+            if (useSupabaseAuth && user?.role !== 'admin') {
+                const { error } = await supabase.auth.verifyOtp({ email: user?.email, token: otp, type: 'email' })
+                if (error) throw error
+            } else {
+                await api.post('/auth/verify-otp/', { mobileNumber: user?.mobileNumber, otp })
+            }
             setChangePassStep('newpass')
         } catch (err) {
-            setError(err.message || 'Invalid OTP')
+            setError(err.message || err.response?.data?.error || 'Invalid OTP')
         } finally {
             setLoading(false)
         }
@@ -71,7 +81,10 @@ const ProfilePanel = ({ isOpen, onClose }) => {
         setError(null)
         try {
             const hashedPassword = await sha256(newPassword)
-            await api.post('/auth/reset-password/', { email: user?.email, password: hashedPassword, supabaseVerified: true })
+            const payload = (useSupabaseAuth && user?.role !== 'admin')
+                ? { email: user?.email, password: hashedPassword, supabaseVerified: true }
+                : { email: user?.email, password: hashedPassword }
+            await api.post('/auth/reset-password/', payload)
             setSuccess('Password changed successfully!')
             setChangePassStep(null)
             setOtp('')
