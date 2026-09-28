@@ -28,7 +28,7 @@ const ForgotPassword = () => {
         setLoadingMessage('Sending OTP...')
         setError(null)
         try {
-            const { error } = await supabase.auth.resetPasswordForEmail(identifier)
+            const { error } = await supabase.auth.signInWithOtp({ email: identifier, options: { shouldCreateUser: false } })
             if (error) throw error
             setStep(2)
         } catch (err) {
@@ -61,6 +61,7 @@ const ForgotPassword = () => {
         try {
             const hashedPassword = await sha256(form.password)
             await api.post('/auth/reset-password/', { email: identifier, password: hashedPassword, supabaseVerified: true })
+            await supabase.auth.updateUser({ password: form.password })
             setStep(4)
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to reset password. Please try again.')
